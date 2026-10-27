@@ -1,0 +1,13 @@
+ERUDITO — sito pronto da pubblicare
+
+Contenuto: index.html (il gioco), icone, manifest.webmanifest.
+Basta caricare TUTTI i file nella stessa cartella.
+
+GitHub Pages: crea un repository, carica i file nella radice, poi
+Settings > Pages > Deploy from a branch > main / (root).
+Netlify: vai su app.netlify.com/drop e trascina la cartella decompressa.
+
+Su iPhone: Safari > Condividi > Aggiungi a Home. Su Android: menu di Chrome > Installa app / Aggiungi a schermata Home.
+
+Il nome del gioco si cambia con la costante NAME in index.html (e nel titolo, nel manifest).
+I progressi di ogni giocatore restano nel suo browser.
