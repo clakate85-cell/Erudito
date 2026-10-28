@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="it"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ERUDITO — La sfida della conoscenza</title>
+<meta name="theme-color" content="#0b1030">
+<meta name="description" content="ERUDITO: il quiz di cultura generale in italiano.">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="ERUDITO">
+<style>
+:root{--bg:#f4f5fb;--card:#fff;--tx:#14173a;--mu:#555a80;--ac:#6d28d9;--tq:#0f766e;--ok:#166534;--okb:#dcfce7;--ko:#991b1b;--kob:#fee2e2;--bd:#d3d7ee;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0b1030;--card:#171d4a;--tx:#eef0ff;--mu:#aab0dd;--ac:#a78bfa;--tq:#2dd4bf;--ok:#86efac;--okb:#14532d;--ko:#fca5a5;--kob:#7f1d1d;--bd:#2c3566}}
+:root[data-theme="dark"]{--bg:#0b1030;--card:#171d4a;--tx:#eef0ff;--mu:#aab0dd;--ac:#a78bfa;--tq:#2dd4bf;--ok:#86efac;--okb:#14532d;--ko:#fca5a5;--kob:#7f1d1d;--bd:#2c3566}
+*{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif}
+#app{max-width:560px;margin:0 auto;padding:16px}
+h1{font-size:1.9rem;margin:8px 0;letter-spacing:.04em;background:linear-gradient(90deg,var(--ac),var(--tq));-webkit-background-clip:text;background-clip:text;color:transparent}
+h2{margin:.4em 0}p.s{color:var(--mu);margin:0 0 12px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:18px;padding:14px;margin:10px 0}
+button,select{font:inherit;color:var(--tx)}
+.b{display:block;width:100%;min-height:54px;margin:8px 0;padding:12px 14px;text-align:left;background:var(--card);border:2px solid var(--bd);border-radius:16px;cursor:pointer}
+.b:hover,.b:focus-visible{border-color:var(--ac);outline:none}
+.p{background:linear-gradient(90deg,var(--ac),var(--tq));color:#fff;border:0;text-align:center;font-weight:700}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.row>*{flex:1}
+.chip{flex:none;padding:8px 12px;border-radius:99px;border:2px solid var(--bd);background:var(--card);cursor:pointer}
+.chip[aria-pressed=true]{border-color:var(--c,var(--ac));background:var(--c,var(--ac));color:#fff}
+.top{display:flex;justify-content:space-between;font-weight:700}
+.bar{height:10px;background:var(--bd);border-radius:9px;overflow:hidden;margin:8px 0}.bar i{display:block;height:100%;background:var(--tq);transition:width .2s linear}
+.q{font-size:1.25rem;font-weight:700;margin:14px 0}
+.ok{background:var(--okb);border-color:var(--ok)}.ko{background:var(--kob);border-color:var(--ko)}
+.fb{padding:12px;border-radius:14px;margin:10px 0;border:2px solid}
+.tag{display:inline-block;padding:2px 10px;border-radius:99px;color:#fff;font-size:.8rem;background:var(--c)}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+@keyframes pop{from{transform:scale(.97);opacity:.5}to{transform:none;opacity:1}}.fb{animation:pop .2s}
+</style></head><body><main id="app" aria-live="polite"></main>
+<script>
+const NAME="ERUDITO";
+const CATS={mus:["Musica","🎵","#be123c"],cin:["Cinema e serie TV","🎬","#b45309"],sto:["Storia","🏛️","#92400e"],geo:["Geografia","🌍","#0f766e"],sci:["Scienza e tecnologia","🔬","#1d4ed8"],spo:["Sport","⚽","#15803d"],art:["Arte e letteratura","🎨","#7e22ce"],gio:["Giochi e intrattenimento","🎮","#c2410c"],cur:["Curiosità","💡","#475569"],att:["Attualità e mondo","🌐","#0e7490"]};
+const DIF=["Facile","Media","Difficile"],TM=[20,25,30];
+// [categoria, difficoltà, domanda, corretta, [errate], spiegazione]
+const Q=[
+["mus",0,"Quanti tasti ha un pianoforte standard?","88",["76","92","100"],"Sono 52 tasti bianchi e 36 neri."],
+["mus",0,"Chi compose «Le quattro stagioni»?","Antonio Vivaldi",["Johann Sebastian Bach","Wolfgang Amadeus Mozart","Giuseppe Verdi"],"I concerti per violino furono pubblicati nel 1725."],
+["mus",1,"Quale band pubblicò l’album «Abbey Road»?","The Beatles",["The Rolling Stones","Pink Floyd","Queen"],"Uscì nel 1969 e prende il nome dallo studio londinese."],
+["mus",2,"Chi compose la Sinfonia «Dal Nuovo Mondo»?","Antonín Dvořák",["Bedřich Smetana","Johannes Brahms","Gustav Mahler"],"Fu scritta nel 1893 durante il soggiorno negli Stati Uniti."],
+["cin",1,"Chi diresse il film «Psyco» (1960)?","Alfred Hitchcock",["Orson Welles","Stanley Kubrick","Billy Wilder"],"È considerato uno dei suoi capolavori."],
+["cin",0,"Chi ha diretto e interpretato «La vita è bella»?","Roberto Benigni",["Carlo Verdone","Massimo Troisi","Nanni Moretti"],"Il film del 1997 vinse tre Oscar nel 1999."],
+["cin",0,"Quale attore interpreta Jack Dawson in «Titanic» (1997)?","Leonardo DiCaprio",["Brad Pitt","Johnny Depp","Matt Damon"],"Recita accanto a Kate Winslet, nel film di James Cameron."],
+["cin",2,"Chi diresse «I sette samurai» (1954)?","Akira Kurosawa",["Yasujirō Ozu","Hayao Miyazaki","Kenji Mizoguchi"],"Il film ispirò il western «I magnifici sette»."],
+["sto",0,"In che anno cadde il muro di Berlino?","1989",["1961","1975","1991"],"Il muro fu aperto il 9 novembre 1989."],
+["sto",1,"Chi fu il primo imperatore romano?","Augusto",["Giulio Cesare","Nerone","Traiano"],"Ottaviano assunse il titolo di Augusto nel 27 a.C."],
+["sto",0,"In che anno Cristoforo Colombo raggiunse l’America?","1492",["1453","1519","1607"],"Sbarcò nelle Bahamas il 12 ottobre 1492."],
+["sto",2,"Quale trattato del 1648 pose fine alla guerra dei Trent’anni?","Pace di Vestfalia",["Pace di Utrecht","Congresso di Vienna","Pace di Augusta"],"Segnò l’avvio del moderno sistema di Stati sovrani."],
+["geo",1,"Qual è la capitale dell’Australia?","Canberra",["Sydney","Melbourne","Perth"],"Fu scelta come compromesso tra Sydney e Melbourne."],
+["geo",0,"Qual è il fiume più lungo d’Italia?","Po",["Tevere","Adige","Arno"],"Scorre per circa 652 km."],
+["geo",0,"Qual è la montagna più alta del mondo sul livello del mare?","Everest",["K2","Kangchenjunga","Monte Bianco"],"Misura circa 8.849 metri."],
+["geo",2,"Qual è la capitale del Burkina Faso?","Ouagadougou",["Bamako","Niamey","Accra"],"È anche la città più popolosa del paese."],
+["sci",0,"Qual è il simbolo chimico dell’oro?","Au",["Ag","Go","Or"],"Deriva dal latino aurum."],
+["sci",0,"Qual è il pianeta più grande del Sistema solare?","Giove",["Saturno","Nettuno","Terra"],"La sua massa è più del doppio di quella di tutti gli altri pianeti messi insieme."],
+["sci",1,"Quanti cromosomi ha una cellula umana tipica?","46",["23","44","48"],"Sono 23 coppie."],
+["sci",1,"Chi formulò la teoria della relatività generale?","Albert Einstein",["Isaac Newton","Niels Bohr","Max Planck"],"La presentò nel 1915."],
+["sci",2,"Quale particella fu annunciata al CERN nel 2012?","Bosone di Higgs",["Neutrino tau","Quark top","Gravitone"],"La scoperta fu annunciata dagli esperimenti ATLAS e CMS."],
+["spo",0,"Quanti giocatori per squadra scendono in campo in una partita di calcio?","11",["9","10","12"],"Portiere compreso."],
+["spo",1,"In quale città si tennero le Olimpiadi estive del 2016?","Rio de Janeiro",["Londra","Tokyo","Pechino"],"Furono le prime Olimpiadi in Sud America."],
+["spo",1,"Quanti Mondiali di calcio maschili ha vinto l’Italia?","4",["3","5","2"],"Nel 1934, 1938, 1982 e 2006."],
+["spo",2,"In quale anno si disputarono i primi Giochi olimpici moderni?","1896",["1900","1912","1888"],"Si tennero ad Atene."],
+["art",0,"Chi dipinse la Gioconda?","Leonardo da Vinci",["Raffaello","Michelangelo","Botticelli"],"È conservata al Louvre di Parigi."],
+["art",0,"Chi scrisse la Divina Commedia?","Dante Alighieri",["Petrarca","Boccaccio","Ariosto"],"Fu composta nel primo Trecento."],
+["art",1,"Chi scrisse «I promessi sposi»?","Alessandro Manzoni",["Giacomo Leopardi","Ugo Foscolo","Giovanni Verga"],"La prima edizione risale al 1827."],
+["art",2,"Quale pittore realizzò «Las Meninas»?","Diego Velázquez",["Francisco Goya","El Greco","Murillo"],"Il dipinto del 1656 è al Museo del Prado."],
+["gio",0,"Quanti pezzi ha ciascun giocatore all’inizio di una partita a scacchi?","16",["12","14","18"],"Otto pedoni e otto pezzi."],
+["gio",0,"Chi è la celebre mascotte idraulico di Nintendo?","Mario",["Sonic","Link","Pac-Man"],"Debuttò nel 1981 in «Donkey Kong»."],
+["gio",1,"Chi è il protagonista della serie «The Legend of Zelda»?","Link",["Zelda","Ganon","Mario"],"Zelda è la principessa da salvare in molti capitoli."],
+["gio",2,"Quale casa editrice pubblica il fumetto «Dylan Dog»?","Sergio Bonelli Editore",["Panini Comics","Mondadori","Star Comics"],"La serie esordì nel 1986, ideata da Tiziano Sclavi."],
+["cur",0,"Quante zampe ha un ragno?","8",["6","10","12"],"I ragni sono aracnidi, non insetti."],
+["cur",0,"Qual è l’animale terrestre più veloce?","Ghepardo",["Leone","Antilope","Cavallo"],"Può superare i 100 km/h in brevi scatti."],
+["cur",1,"Qual è l’organo più esteso del corpo umano?","Pelle",["Fegato","Polmoni","Intestino"],"Negli adulti copre circa 2 m²."],
+["cur",2,"Di che colore è il sangue dei polpi?","Blu",["Rosso","Verde","Trasparente"],"Contiene emocianina, a base di rame."],
+["mus",0,"Quante corde ha una chitarra classica?","6",["4","5","7"],"Sono accordate Mi-La-Re-Sol-Si-Mi."],
+["mus",1,"Chi compose l’opera «La traviata»?","Giuseppe Verdi",["Giacomo Puccini","Gioachino Rossini","Gaetano Donizetti"],"Debuttò a Venezia nel 1853."],
+["mus",1,"Quale gruppo pubblicò l’album «The Dark Side of the Moon»?","Pink Floyd",["Led Zeppelin","The Who","Genesis"],"Uscì nel 1973."],
+["mus",1,"Qual è il vero nome di Freddie Mercury?","Farrokh Bulsara",["Farouk Mercury","Fred Balsara","Faruk Bulsar"],"Nacque a Zanzibar nel 1946."],
+["mus",2,"Chi compose il «Bolero» nel 1928?","Maurice Ravel",["Claude Debussy","Erik Satie","Camille Saint-Saëns"],"Fu commissionato dalla danzatrice Ida Rubinstein."],
+["cin",0,"Quale film Disney ha come protagonista il leone Simba?","Il re leone",["Bambi","Tarzan","Dumbo"],"Uscì nel 1994."],
+["cin",1,"Chi diresse «Pulp Fiction»?","Quentin Tarantino",["Martin Scorsese","Guy Ritchie","David Fincher"],"Vinse la Palma d’oro a Cannes nel 1994."],
+["cin",1,"Chi interpretò il Joker ne «Il cavaliere oscuro» (2008)?","Heath Ledger",["Joaquin Phoenix","Jack Nicholson","Jared Leto"],"Ricevette l’Oscar postumo come miglior attore non protagonista."],
+["cin",1,"Chi diresse «Il buono, il brutto, il cattivo»?","Sergio Leone",["Sergio Corbucci","Dario Argento","Federico Fellini"],"Uscì nel 1966, con le musiche di Ennio Morricone."],
+["cin",2,"Quale film di Fellini vinse l’Oscar come miglior film straniero nel 1964?","8½",["La dolce vita","Roma","Satyricon"],"Il premio andò al film del 1963."],
+["sto",0,"Chi fu il primo presidente degli Stati Uniti?","George Washington",["Thomas Jefferson","Abraham Lincoln","Benjamin Franklin"],"Rimase in carica dal 1789 al 1797."],
+["sto",0,"In che anno scoppiò la Prima guerra mondiale?","1914",["1912","1916","1918"],"Dopo l’attentato di Sarajevo."],
+["sto",1,"Quale città fu sepolta dall’eruzione del Vesuvio del 79 d.C. insieme a Ercolano?","Pompei",["Capua","Cuma","Paestum"],"Gli scavi la hanno riportata alla luce."],
+["sto",1,"Chi fu il primo re d’Italia?","Vittorio Emanuele II",["Umberto I","Carlo Alberto","Vittorio Emanuele III"],"Il Regno d’Italia fu proclamato nel 1861."],
+["sto",1,"In quale battaglia del 1815 fu sconfitto definitivamente Napoleone?","Waterloo",["Austerlitz","Lipsia","Borodino"],"Si combatté il 18 giugno, nell’attuale Belgio."],
+["sto",2,"Quale imperatore bizantino promosse il «Corpus iuris civilis»?","Giustiniano I",["Costantino I","Eraclio","Basilio II"],"L’opera fu compilata tra il 529 e il 534."],
+["geo",0,"Qual è il continente più esteso?","Asia",["Africa","America","Europa"],"Occupa circa un terzo delle terre emerse."],
+["geo",0,"Qual è il lago più grande d’Italia?","Lago di Garda",["Lago Maggiore","Lago di Como","Lago Trasimeno"],"Ha una superficie di circa 370 km²."],
+["geo",0,"Quale fiume attraversa Parigi?","Senna",["Loira","Rodano","Garonna"],"Sfocia nella Manica."],
+["geo",1,"Qual è la capitale del Canada?","Ottawa",["Toronto","Montréal","Vancouver"],"Si trova nella provincia dell’Ontario."],
+["geo",1,"Come si chiama il punto più profondo degli oceani?","Fossa delle Marianne",["Fossa delle Tonga","Fossa delle Filippine","Fossa di Porto Rico"],"Supera gli 10.900 metri di profondità."],
+["geo",2,"Qual è il paese più esteso dell’Africa?","Algeria",["Repubblica Democratica del Congo","Sudan","Libia"],"Lo è dal 2011, dopo la divisione del Sudan."],
+["sci",0,"Qual è la formula chimica dell’acqua?","H2O",["CO2","NaCl","O2"],"Due atomi di idrogeno e uno di ossigeno."],
+["sci",0,"Quale pianeta è detto «pianeta rosso»?","Marte",["Venere","Mercurio","Giove"],"Il colore deriva dagli ossidi di ferro sulla superficie."],
+["sci",1,"Quale gas è il più abbondante nell’aria?","Azoto",["Ossigeno","Anidride carbonica","Argon"],"Costituisce circa il 78% dell’atmosfera."],
+["sci",1,"Chi scoprì la penicillina nel 1928?","Alexander Fleming",["Louis Pasteur","Robert Koch","Marie Curie"],"Fu una scoperta casuale in laboratorio."],
+["sci",2,"Quale organello cellulare produce la maggior parte dell’ATP?","Mitocondrio",["Ribosoma","Lisosoma","Apparato del Golgi"],"È detto anche «centrale energetica» della cellula."],
+["spo",0,"Quanti giocatori di una squadra di pallavolo sono in campo?","6",["5","7","9"],"Sono disposti su due file da tre."],
+["spo",0,"In quale sport si disputa il torneo del Roland Garros?","Tennis",["Golf","Ciclismo","Rugby"],"Si gioca sulla terra rossa a Parigi."],
+["spo",1,"Quale nazione ospitò i Mondiali di calcio del 2022?","Qatar",["Russia","Brasile","Stati Uniti"],"La finale vide l’Argentina battere la Francia ai rigori."],
+["spo",1,"Quanto è lunga una maratona?","42,195 km",["40 km","42,5 km","45 km"],"La misura fu fissata ufficialmente nel 1921."],
+["spo",1,"Quale squadra ha vinto più edizioni della Coppa dei Campioni/Champions League?","Real Madrid",["Milan","Bayern Monaco","Liverpool"],"Ha vinto la competizione più di ogni altro club."],
+["art",0,"Chi dipinse «La notte stellata»?","Vincent van Gogh",["Claude Monet","Paul Cézanne","Edvard Munch"],"Fu realizzata nel 1889."],
+["art",1,"Chi scolpì il David conservato alla Galleria dell’Accademia di Firenze?","Michelangelo",["Donatello","Bernini","Canova"],"La statua fu terminata nel 1504."],
+["art",1,"Chi scrisse «Il nome della rosa»?","Umberto Eco",["Italo Calvino","Alberto Moravia","Primo Levi"],"Il romanzo uscì nel 1980."],
+["art",1,"Quale scrittore creò Sherlock Holmes?","Arthur Conan Doyle",["Agatha Christie","Charles Dickens","Oscar Wilde"],"Il personaggio esordì nel 1887."],
+["art",2,"Chi scrisse «Il fu Mattia Pascal»?","Luigi Pirandello",["Italo Svevo","Giovanni Verga","Gabriele D’Annunzio"],"Il romanzo è del 1904."],
+["gio",0,"Quante caselle ha una scacchiera?","64",["32","49","81"],"Sono 8 righe per 8 colonne."],
+["gio",0,"A quale franchise appartiene Pikachu?","Pokémon",["Digimon","Yu-Gi-Oh!","Dragon Ball"],"È la mascotte della serie."],
+["gio",1,"Quale azienda produce la console PlayStation?","Sony",["Sega","Microsoft","Nintendo"],"La prima uscì in Giappone nel 1994."],
+["gio",1,"In quale gioco da tavolo si trovano «Via Accademia» e «Parco della Vittoria»?","Monopoli",["Risiko","Cluedo","Scarabeo"],"Sono caselle dell’edizione italiana."],
+["gio",2,"Chi ideò il fumetto «Tex»?","Gian Luigi Bonelli",["Hugo Pratt","Tiziano Sclavi","Guido Crepax"],"Esordì nel 1948 con i disegni di Aurelio Galleppini."],
+["cur",0,"Quale frutto è l’ingrediente base del guacamole?","Avocado",["Lime","Pomodoro","Mango"],"Si aggiungono cipolla, coriandolo e lime."],
+["cur",0,"Quanti giorni ha un anno bisestile?","366",["365","364","367"],"Febbraio ha 29 giorni."],
+["cur",1,"Qual è il più grande animale del pianeta?","Balenottera azzurra",["Elefante africano","Squalo balena","Orca"],"Può superare i 25 metri di lunghezza."],
+["cur",1,"Qual è l’unico mammifero capace di volo attivo?","Pipistrello",["Scoiattolo volante","Colugo","Lemure"],"Gli altri mammiferi «volanti» si limitano a planare."],
+["cur",2,"Quanti cuori ha un polpo?","3",["1","2","4"],"Due pompano il sangue alle branchie, uno al resto del corpo."],
+["mus",0,"Quante note compongono la scala diatonica?","7",["5","8","12"],"Do, re, mi, fa, sol, la, si."],
+["mus",0,"In quale città si tiene ogni anno il Festival della canzone italiana?","Sanremo",["Viareggio","Rimini","Riccione"],"Il Festival si svolge dal 1951."],
+["mus",1,"Chi è il cantautore di «La canzone di Marinella»?","Fabrizio De André",["Francesco De Gregori","Lucio Dalla","Fabrizio Moro"],"Il brano è del 1964."],
+["mus",1,"Chi è il cantante degli U2?","Bono",["The Edge","Bob Geldof","Liam Gallagher"],"Il suo vero nome è Paul Hewson."],
+["mus",1,"Quale compositore scrisse la Nona sinfonia con l’«Inno alla gioia»?","Ludwig van Beethoven",["Wolfgang Amadeus Mozart","Franz Schubert","Joseph Haydn"],"Fu eseguita per la prima volta nel 1824."],
+["mus",1,"Di quale paese erano originari gli ABBA?","Svezia",["Norvegia","Danimarca","Finlandia"],"Vinsero l’Eurovision nel 1974."],
+["mus",2,"Quale strumento suonava Miles Davis?","Tromba",["Sassofono","Clarinetto","Trombone"],"È una figura centrale del jazz del Novecento."],
+["mus",2,"Quale opera di Verdi contiene il coro «Va, pensiero»?","Nabucco",["Aida","Rigoletto","Il trovatore"],"Fu rappresentata alla Scala nel 1842."],
+["cin",0,"Chi diresse «Jurassic Park»?","Steven Spielberg",["George Lucas","James Cameron","Ridley Scott"],"Uscì nel 1993."],
+["cin",0,"Come si chiama il robot protagonista del film Pixar del 2008?","WALL-E",["R2-D2","Baymax","Bumblebee"],"Pulisce un pianeta Terra abbandonato."],
+["cin",1,"Chi interpreta Forrest Gump?","Tom Hanks",["Tom Cruise","Kevin Costner","Robin Williams"],"Il film vinse l’Oscar come miglior film."],
+["cin",1,"Chi diresse «La dolce vita»?","Federico Fellini",["Luchino Visconti","Roberto Rossellini","Vittorio De Sica"],"Vinse la Palma d’oro a Cannes nel 1960."],
+["cin",1,"Quale serie TV è ambientata a Westeros?","Il trono di spade",["Vikings","The Witcher","The Last Kingdom"],"È tratta dai romanzi di George R. R. Martin."],
+["cin",1,"Quale attore interpreta Mr. Bean?","Rowan Atkinson",["Hugh Laurie","Stephen Fry","John Cleese"],"La serie esordì nel 1990."],
+["cin",1,"Chi diresse «2001: Odissea nello spazio»?","Stanley Kubrick",["Steven Spielberg","Andrej Tarkovskij","Ridley Scott"],"Uscì nel 1968."],
+["cin",2,"Quale fu il primo film non in lingua inglese a vincere l’Oscar come miglior film?","Parasite",["Roma","La vita è bella","La La Land"],"Del regista Bong Joon-ho, premiato nel 2020."],
+["sto",0,"Chi guidò la spedizione dei Mille nel 1860?","Giuseppe Garibaldi",["Giuseppe Mazzini","Camillo Cavour","Vittorio Emanuele II"],"Partì da Quarto, vicino a Genova."],
+["sto",0,"Quale popolo costruì le piramidi di Giza?","Gli Egizi",["I Maya","I Persiani","I Sumeri"],"Furono edificate circa 4.500 anni fa."],
+["sto",1,"In che anno iniziò la Rivoluzione francese?","1789",["1776","1799","1815"],"Con la presa della Bastiglia, il 14 luglio."],
+["sto",1,"In che anno si tenne il referendum tra monarchia e repubblica in Italia?","1946",["1943","1948","1950"],"Si votò il 2 giugno."],
+["sto",1,"Chi guidò l’Unione Sovietica durante la Seconda guerra mondiale?","Stalin",["Lenin","Chruščëv","Trockij"],"Governò dalla metà degli anni Venti al 1953."],
+["sto",1,"Quale condottiero cartaginese attraversò le Alpi con gli elefanti?","Annibale",["Scipione","Amilcare","Giugurta"],"Accadde nel 218 a.C., durante la seconda guerra punica."],
+["sto",2,"In che anno Costantinopoli fu conquistata dagli Ottomani?","1453",["1204","1492","1517"],"Segnò la fine dell’Impero bizantino."],
+["sto",2,"Chi fu il primo presidente del Consiglio del Regno d’Italia?","Camillo Benso di Cavour",["Giovanni Giolitti","Francesco Crispi","Giuseppe Garibaldi"],"Guidò il governo nel 1861."],
+["geo",0,"Qual è la capitale della Germania?","Berlino",["Monaco","Amburgo","Francoforte"],"È capitale dal 1990 della Germania riunificata."],
+["geo",0,"Qual è l’oceano più grande?","Pacifico",["Atlantico","Indiano","Artico"],"Copre circa un terzo della superficie terrestre."],
+["geo",0,"Qual è la capitale del Giappone?","Tokyo",["Kyoto","Osaka","Nagoya"],"Kyoto fu capitale imperiale fino al 1868."],
+["geo",1,"Qual è il vulcano attivo più alto dell’Europa continentale e insulare?","Etna",["Vesuvio","Stromboli","Teide"],"Supera i 3.300 metri."],
+["geo",1,"Quale fiume attraversa Il Cairo?","Nilo",["Tigri","Eufrate","Niger"],"È uno dei fiumi più lunghi del mondo."],
+["geo",1,"Qual è la capitale del Brasile?","Brasília",["Rio de Janeiro","San Paolo","Salvador"],"Fu inaugurata nel 1960."],
+["geo",1,"Qual è il più grande deserto caldo del mondo?","Sahara",["Gobi","Kalahari","Deserto arabico"],"Si trova nell’Africa settentrionale."],
+["geo",1,"Qual è la capitale della Nuova Zelanda?","Wellington",["Auckland","Christchurch","Hamilton"],"Auckland è la città più popolosa."],
+["geo",2,"Qual è la capitale della Mongolia?","Ulan Bator",["Astana","Biškek","Tashkent"],"È una delle capitali più fredde del mondo."],
+["sci",0,"Quanti pianeti ha il Sistema solare?","8",["7","9","10"],"Plutone è classificato come pianeta nano."],
+["sci",0,"Quale organo pompa il sangue nel corpo umano?","Cuore",["Fegato","Polmone","Rene"],"Ha quattro cavità: due atri e due ventricoli."],
+["sci",1,"Qual è l’osso più lungo del corpo umano?","Femore",["Tibia","Omero","Perone"],"Si trova nella coscia."],
+["sci",1,"Chi formulò la legge di gravitazione universale?","Isaac Newton",["Galileo Galilei","Johannes Kepler","Nikola Tesla"],"La pubblicò nei «Principia» nel 1687."],
+["sci",1,"Quale vitamina si produce con l’esposizione al sole?","Vitamina D",["Vitamina C","Vitamina A","Vitamina B12"],"La pelle la sintetizza grazie ai raggi UVB."],
+["sci",1,"Qual è il simbolo chimico del sodio?","Na",["So","Sd","S"],"Deriva dal latino natrium."],
+["sci",2,"Quale scienziata ricevette due Premi Nobel in discipline diverse?","Marie Curie",["Rosalind Franklin","Lise Meitner","Dorothy Hodgkin"],"Fisica nel 1903 e chimica nel 1911."],
+["sci",2,"Qual è l’elemento più abbondante nell’universo?","Idrogeno",["Elio","Ossigeno","Carbonio"],"Costituisce circa tre quarti della materia ordinaria."],
+["spo",0,"Quanti anelli compongono il simbolo olimpico?","5",["4","6","7"],"Rappresentano i cinque continenti."],
+["spo",0,"In quale sport si usa un volano?","Badminton",["Squash","Padel","Tennis tavolo"],"Il volano è fatto di piume o di plastica."],
+["spo",0,"In quale sport si disputa il Tour de France?","Ciclismo",["Atletica","Automobilismo","Nuoto"],"La prima edizione fu nel 1903."],
+["spo",1,"Quale nazionale ha vinto più Mondiali di calcio maschili?","Brasile",["Germania","Italia","Argentina"],"Ha vinto cinque edizioni."],
+["spo",1,"Quale città ospitò le Olimpiadi invernali del 2006?","Torino",["Salt Lake City","Vancouver","Soči"],"Furono i secondi Giochi invernali in Italia dopo Cortina 1956."],
+["spo",1,"Quale tennista detiene il record maschile di titoli del Grande Slam?","Novak Djokovic",["Rafael Nadal","Roger Federer","Pete Sampras"],"Ha superato i 22 titoli di Nadal."],
+["spo",1,"Quanti punti vale una meta nel rugby?","5",["3","6","7"],"La trasformazione ne vale altri 2."],
+["spo",1,"Contro quale nazionale l’Italia vinse la finale dei Mondiali 2006?","Francia",["Germania","Brasile","Argentina"],"Vinse ai rigori a Berlino."],
+["spo",2,"Quale nazione ha vinto più medaglie d’oro nella storia delle Olimpiadi estive?","Stati Uniti",["Unione Sovietica","Cina","Regno Unito"],"Il primato vale per l’intera storia dei Giochi."],
+["art",0,"Chi dipinse «La nascita di Venere»?","Sandro Botticelli",["Tiziano","Giotto","Caravaggio"],"È agli Uffizi di Firenze."],
+["art",0,"Chi scrisse «Romeo e Giulietta»?","William Shakespeare",["Christopher Marlowe","Charles Dickens","John Milton"],"La tragedia risale alla fine del Cinquecento."],
+["art",1,"Chi dipinse la volta della Cappella Sistina?","Michelangelo",["Raffaello","Leonardo da Vinci","Giotto"],"Lavorò all’opera tra il 1508 e il 1512."],
+["art",1,"Chi scrisse «Guerra e pace»?","Lev Tolstoj",["Fëdor Dostoevskij","Anton Čechov","Nikolaj Gogol’"],"Il romanzo fu pubblicato tra il 1865 e il 1869."],
+["art",1,"Chi scrisse «Il Decameron»?","Giovanni Boccaccio",["Francesco Petrarca","Dante Alighieri","Niccolò Machiavelli"],"Fu composto attorno alla metà del Trecento."],
+["art",1,"Quale pittore realizzò «Guernica»?","Pablo Picasso",["Salvador Dalí","Joan Miró","Francisco Goya"],"Lo dipinse nel 1937."],
+["art",2,"Chi scrisse «Se questo è un uomo»?","Primo Levi",["Elie Wiesel","Italo Calvino","Cesare Pavese"],"Fu pubblicato nel 1947."],
+["art",2,"Quale architetto progettò la cupola di Santa Maria del Fiore?","Filippo Brunelleschi",["Leon Battista Alberti","Andrea Palladio","Donato Bramante"],"I lavori della cupola iniziarono nel 1420."],
+["gio",0,"Quale pezzo degli scacchi si muove solo in diagonale?","Alfiere",["Torre","Cavallo","Pedone"],"Ogni alfiere resta sempre sullo stesso colore di casa."],
+["gio",0,"Come si chiama il porcospino blu di Sega?","Sonic",["Tails","Knuckles","Shadow"],"Debuttò nel 1991."],
+["gio",0,"Quale personaggio dei fumetti indossa un costume da pipistrello?","Batman",["Superman","Flash","Daredevil"],"Esordì nel 1939."],
+["gio",1,"In quale gioco da tavolo si deve scoprire assassino, arma e stanza?","Cluedo",["Risiko","Taboo","Pictionary"],"Il delitto avviene nella villa del signor Black."],
+["gio",1,"Quale videogioco ha come nemico il Creeper?","Minecraft",["Roblox","Fortnite","Among Us"],"Il Creeper esplode quando si avvicina al giocatore."],
+["gio",1,"Quale casa editrice pubblica i fumetti di Spider-Man?","Marvel",["DC Comics","Image Comics","Dark Horse"],"Il personaggio esordì nel 1962."],
+["gio",2,"Chi creò il videogioco Tetris nel 1984?","Aleksej Pažitnov",["Shigeru Miyamoto","Hideo Kojima","Satoru Iwata"],"Lo sviluppò in Unione Sovietica."],
+["gio",2,"In che anno uscì in Giappone «Super Mario Bros.» per NES?","1985",["1981","1989","1991"],"Fu uno dei giochi più venduti della sua epoca."],
+["cur",0,"Quale animale, simbolo dell’Australia, si sposta saltando?","Canguro",["Koala","Wombat","Emù"],"Le femmine portano i piccoli nel marsupio."],
+["cur",0,"Da quale ingrediente si ottiene di solito la pasta secca italiana?","Semola di grano duro",["Farina di riso","Farina di mais","Fecola di patate"],"Per legge la pasta secca italiana si fa con semola di grano duro."],
+["cur",0,"Da quale regione italiana proviene il pesto alla genovese?","Liguria",["Piemonte","Toscana","Sardegna"],"Gli ingredienti base sono basilico, pinoli, olio e formaggio."],
+["cur",1,"Qual è la lingua con più madrelingua al mondo?","Cinese mandarino",["Inglese","Spagnolo","Hindi"],"Conta oltre 900 milioni di madrelingua."],
+["cur",1,"Quale animale è il simbolo del WWF?","Panda gigante",["Tigre","Elefante","Koala"],"Il logo è nato nel 1961."],
+["cur",1,"Quale formaggio si usa nella pizza Margherita?","Mozzarella",["Provola","Scamorza","Gorgonzola"],"Insieme a pomodoro e basilico richiama i colori della bandiera."],
+["cur",2,"Quante ossa ha un adulto umano?","206",["186","216","256"],"Alla nascita sono di più, poi alcune si fondono."],
+["cur",2,"Quale uccello raggiunge la maggiore velocità in picchiata?","Falco pellegrino",["Aquila reale","Colibrì","Albatro"],"Supera i 300 km/h."],
+["mus",0,"Quanti musicisti compongono un quartetto?","4",["3","5","6"],"Il quartetto d’archi classico ha due violini, una viola e un violoncello."],
+["mus",0,"In quale gruppo suonavano Mick Jagger e Keith Richards?","The Rolling Stones",["The Kinks","The Doors","Oasis"],"La band nacque a Londra nel 1962."],
+["mus",1,"Quale cantante è soprannominato «il re del pop»?","Michael Jackson",["Prince","Elvis Presley","Stevie Wonder"],"L’album «Thriller» è del 1982."],
+["mus",1,"Chi compose «Il flauto magico»?","Wolfgang Amadeus Mozart",["Ludwig van Beethoven","Joseph Haydn","Gioachino Rossini"],"Debuttò a Vienna nel 1791."],
+["mus",1,"Quale compositore scrisse «La Bohème» e «Tosca»?","Giacomo Puccini",["Giuseppe Verdi","Pietro Mascagni","Ruggero Leoncavallo"],"Era nato a Lucca."],
+["mus",1,"Di quale città erano originari i Beatles?","Liverpool",["Manchester","Londra","Birmingham"],"La band si formò nel 1960."],
+["mus",2,"Chi compose il balletto «Il lago dei cigni»?","Pëtr Il’ič Čajkovskij",["Sergej Prokof’ev","Sergej Rachmaninov","Igor Stravinskij"],"Fu composto nella seconda metà degli anni Settanta dell’Ottocento."],
+["mus",2,"Chi compose «Rapsodia in blu»?","George Gershwin",["Leonard Bernstein","Aaron Copland","Cole Porter"],"Fu presentata a New York nel 1924."],
+["cin",0,"Quale giovane mago studia a Hogwarts nei film tratti dai romanzi di J.K. Rowling?","Harry Potter",["Percy Jackson","Merlino","Gandalf"],"Il primo film è del 2001."],
+["cin",0,"Come si chiama il burattino di legno creato da Geppetto?","Pinocchio",["Pulcinella","Arlecchino","Mangiafuoco"],"Il personaggio è di Carlo Collodi."],
+["cin",1,"Chi interpreta Neo in «Matrix»?","Keanu Reeves",["Brad Pitt","Tom Cruise","Will Smith"],"Il film delle Wachowski è del 1999."],
+["cin",1,"Chi diresse la trilogia cinematografica de «Il Signore degli Anelli»?","Peter Jackson",["Tim Burton","Sam Raimi","George Miller"],"I film uscirono tra il 2001 e il 2003."],
+["cin",1,"Quale regista diresse «Inception» e «Interstellar»?","Christopher Nolan",["Denis Villeneuve","Ridley Scott","David Fincher"],"Sono usciti nel 2010 e nel 2014."],
+["cin",1,"Quale attrice interpreta Rose in «Titanic»?","Kate Winslet",["Cate Blanchett","Nicole Kidman","Julia Roberts"],"Il personaggio è accanto a Jack Dawson."],
+["cin",2,"Chi compose le musiche di «C’era una volta il West»?","Ennio Morricone",["Nino Rota","Piero Piccioni","Riz Ortolani"],"Il film di Sergio Leone è del 1968."],
+["cin",2,"Quale film di Paolo Sorrentino vinse l’Oscar come miglior film straniero nel 2014?","La grande bellezza",["Youth","Il divo","È stata la mano di Dio"],"Il film è ambientato a Roma."],
+["sto",0,"Chi fu incoronato imperatore dei francesi nel 1804?","Napoleone Bonaparte",["Luigi XVI","Robespierre","Carlo Magno"],"Si incoronò da solo a Notre-Dame."],
+["sto",0,"Quale leader fu simbolo della resistenza non violenta in India?","Mahatma Gandhi",["Jawaharlal Nehru","Rabindranath Tagore","Subhas Chandra Bose"],"Guidò la lotta per l’indipendenza dal Regno Unito."],
+["sto",0,"Chi fu il primo uomo a camminare sulla Luna?","Neil Armstrong",["Buzz Aldrin","Yuri Gagarin","Michael Collins"],"Avvenne il 20 luglio 1969 con la missione Apollo 11."],
+["sto",1,"In che anno gli Stati Uniti dichiararono l’indipendenza?","1776",["1783","1789","1812"],"La dichiarazione è del 4 luglio."],
+["sto",1,"In che anno terminò la Seconda guerra mondiale in Europa?","1945",["1943","1944","1946"],"La Germania si arrese a maggio."],
+["sto",1,"Quale civiltà costruì Machu Picchu?","Gli Inca",["I Maya","Gli Aztechi","Gli Olmechi"],"Sorge sulle Ande, in Perù."],
+["sto",2,"Chi fu l’ultimo imperatore romano d’Occidente, deposto nel 476?","Romolo Augusto",["Giulio Nepote","Onorio","Valentiniano III"],"Fu deposto da Odoacre."],
+["sto",2,"Quali trattati del 1957 istituirono la Comunità economica europea?","Trattati di Roma",["Trattato di Maastricht","Trattato di Lisbona","Trattato di Versailles"],"Furono firmati da sei Stati fondatori."],
+["geo",0,"Qual è la capitale del Portogallo?","Lisbona",["Porto","Madrid","Faro"],"Sorge sull’estuario del Tago."],
+["geo",0,"Quale catena montuosa separa l’Italia da Francia, Svizzera e Austria?","Alpi",["Appennini","Pirenei","Carpazi"],"Il punto più alto è il Monte Bianco."],
+["geo",1,"Qual è il fiume più lungo d’Europa?","Volga",["Danubio","Reno","Dnepr"],"Scorre in Russia e sfocia nel Mar Caspio."],
+["geo",1,"Qual è la capitale della Turchia?","Ankara",["Istanbul","Smirne","Bursa"],"Istanbul è la città più popolosa."],
+["geo",1,"Qual è lo Stato più piccolo del mondo?","Città del Vaticano",["Monaco","San Marino","Liechtenstein"],"Misura circa 0,44 km²."],
+["geo",1,"Qual è la capitale dell’Argentina?","Buenos Aires",["Montevideo","Santiago","Lima"],"Sorge sul Río de la Plata."],
+["geo",1,"Quale stretto separa la Sicilia dalla Calabria?","Stretto di Messina",["Stretto di Bonifacio","Stretto di Gibilterra","Canale di Sicilia"],"Nel punto più stretto misura circa 3 km."],
+["geo",2,"Qual è la capitale del Kazakistan?","Astana",["Almaty","Tashkent","Biškek"],"Almaty è la città più popolosa."],
+["geo",2,"Qual è il lago più profondo del mondo?","Bajkal",["Tanganica","Lago Superiore","Lago Vittoria"],"Supera i 1.600 metri di profondità."],
+["sci",0,"Qual è la stella al centro del Sistema solare?","Il Sole",["Sirio","Stella Polare","Proxima Centauri"],"Contiene la quasi totalità della massa del sistema."],
+["sci",0,"Quante zampe ha un insetto?","6",["4","8","10"],"Tre paia, attaccate al torace."],
+["sci",1,"Quale metallo è liquido a temperatura ambiente?","Mercurio",["Piombo","Stagno","Zinco"],"Il suo simbolo chimico è Hg."],
+["sci",1,"Chi propose la teoria dell’evoluzione per selezione naturale?","Charles Darwin",["Gregor Mendel","Jean-Baptiste Lamarck","Louis Pasteur"],"«L’origine delle specie» fu pubblicata nel 1859."],
+["sci",1,"Quale gas assorbono le piante per la fotosintesi?","Anidride carbonica",["Ossigeno","Azoto","Idrogeno"],"Rilasciano ossigeno come prodotto."],
+["sci",1,"Quale unità misura la forza nel Sistema internazionale?","Newton",["Joule","Pascal","Watt"],"Prende il nome da Isaac Newton."],
+["sci",1,"Dove si trova il DNA nelle cellule eucariote?","Nel nucleo",["Nel citoplasma","Nella membrana","Nel vacuolo"],"Una piccola parte è anche nei mitocondri."],
+["sci",2,"Chi scoprì le leggi dell’ereditarietà studiando i piselli?","Gregor Mendel",["Charles Darwin","Thomas Morgan","Francis Crick"],"Condusse gli esperimenti nell’Ottocento."],
+["sci",2,"Qual è il numero atomico del carbonio?","6",["4","8","12"],"Ha sei protoni nel nucleo."],
+["spo",0,"Quanti giocatori di una squadra di basket sono in campo?","5",["6","7","11"],"Le squadre hanno anche i cambi."],
+["spo",0,"Di che colore è la maglia del leader del Tour de France?","Gialla",["Rosa","Verde","Bianca"],"Fu introdotta nel 1919."],
+["spo",1,"Di che colore è la maglia del leader del Giro d’Italia?","Rosa",["Gialla","Azzurra","Rossa"],"Il colore richiama le pagine della «Gazzetta dello Sport»."],
+["spo",1,"Quale scuderia di Formula 1 ha sede a Maranello?","Ferrari",["McLaren","Mercedes","Red Bull"],"È in Formula 1 dal 1950."],
+["spo",1,"Quale città ospitò le Olimpiadi estive del 2012?","Londra",["Pechino","Atene","Sydney"],"Fu la terza volta per la capitale britannica."],
+["spo",1,"Su quale superficie si gioca il torneo di Wimbledon?","Erba",["Terra rossa","Cemento","Sintetico"],"È l’unico Slam su erba."],
+["spo",2,"Chi fu il primo italiano a vincere il Tour de France?","Ottavio Bottecchia",["Fausto Coppi","Gino Bartali","Costante Girardengo"],"Vinse nel 1924 e nel 1925."],
+["spo",2,"Quale nazionale vinse i primi Mondiali di calcio, nel 1930?","Uruguay",["Argentina","Brasile","Italia"],"Batté l’Argentina in finale."],
+["art",0,"Chi scrisse «Pinocchio»?","Carlo Collodi",["Edmondo De Amicis","Gianni Rodari","Italo Calvino"],"Uscì a puntate dal 1881."],
+["art",1,"Chi dipinse «Il bacio» con la foglia d’oro?","Gustav Klimt",["Egon Schiele","Henri Matisse","Amedeo Modigliani"],"Fu realizzato intorno al 1908."],
+["art",1,"Chi scrisse «Il Piccolo Principe»?","Antoine de Saint-Exupéry",["Jules Verne","Victor Hugo","Albert Camus"],"Fu pubblicato nel 1943."],
+["art",1,"Chi scrisse «Il barone rampante»?","Italo Calvino",["Dino Buzzati","Leonardo Sciascia","Beppe Fenoglio"],"Il romanzo è del 1957."],
+["art",1,"Quale poeta scrisse «L’infinito»?","Giacomo Leopardi",["Giosuè Carducci","Giovanni Pascoli","Eugenio Montale"],"Nacque a Recanati."],
+["art",1,"Quale artista dipinse «La persistenza della memoria» con gli orologi molli?","Salvador Dalí",["René Magritte","Max Ernst","Giorgio de Chirico"],"Il dipinto è del 1931."],
+["art",2,"Chi dipinse «La ragazza con l’orecchino di perla»?","Jan Vermeer",["Rembrandt","Frans Hals","Rubens"],"È conservato all’Aia, al Mauritshuis."],
+["art",2,"Chi scrisse «Cent’anni di solitudine»?","Gabriel García Márquez",["Jorge Luis Borges","Mario Vargas Llosa","Isabel Allende"],"Uscì nel 1967."],
+["art",2,"Chi scrisse «Il Gattopardo»?","Giuseppe Tomasi di Lampedusa",["Leonardo Sciascia","Luigi Pirandello","Elsa Morante"],"Fu pubblicato postumo nel 1958."],
+["gio",0,"Come si chiama il fratello di Mario nei videogiochi Nintendo?","Luigi",["Wario","Toad","Yoshi"],"Di solito indossa una salopette verde."],
+["gio",0,"Il «Texas hold’em» è una variante di quale gioco?","Poker",["Bridge","Scopa","Briscola"],"È la variante più giocata nei tornei."],
+["gio",0,"Quante carte ha un mazzo francese, senza jolly?","52",["48","54","40"],"Quattro semi da tredici carte."],
+["gio",0,"Quale supereroe Marvel è un miliardario con un’armatura high-tech?","Iron Man",["Capitan America","Thor","Hulk"],"Il suo alter ego è Tony Stark."],
+["gio",1,"Chi è il principale nemico di Batman?","Joker",["Lex Luthor","Magneto","Goblin"],"È uno dei cattivi più celebri dei fumetti DC."],
+["gio",1,"Quale gioco di carte italiano ha il «settebello»?","Scopa",["Burraco","Poker","Uno"],"Si gioca con il mazzo di carte italiane."],
+["gio",1,"Quale videogioco del 1980 ha un protagonista giallo che mangia puntini?","Pac-Man",["Space Invaders","Pong","Asteroids"],"Fu creato da Tōru Iwatani."],
+["gio",2,"Chi ha creato Super Mario e The Legend of Zelda?","Shigeru Miyamoto",["Gunpei Yokoi","Satoru Iwata","Hironobu Sakaguchi"],"Lavora da decenni per Nintendo."],
+["gio",2,"Quante tessere ha un set di domino doppio sei?","28",["24","32","36"],"Ogni combinazione di numeri compare una volta."],
+["cur",0,"Quanti colori si contano tradizionalmente nell’arcobaleno?","7",["5","6","8"],"Rosso, arancione, giallo, verde, blu, indaco e violetto."],
+["cur",0,"Quale frutto si ottiene dalla vite?","Uva",["Mela","Pesca","Fragola"],"Dall’uva si ricava anche il vino."],
+["cur",0,"Qual è la città più popolosa d’Italia?","Roma",["Milano","Napoli","Torino"],"Ha quasi tre milioni di abitanti."],
+["cur",0,"Quale città è famosa per la sua torre pendente?","Pisa",["Siena","Lucca","Bologna"],"La torre si trova in Piazza dei Miracoli."],
+["cur",1,"Quale piatto lombardo è fatto con riso e zafferano?","Risotto alla milanese",["Arancini","Paella","Supplì"],"Il colore giallo viene dallo zafferano."],
+["cur",1,"Qual è il più grande mammifero terrestre?","Elefante africano",["Rinoceronte","Ippopotamo","Giraffa"],"Può superare le sei tonnellate."],
+["cur",1,"Quale bevanda si ottiene dalla fermentazione dell’uva?","Vino",["Birra","Sidro","Sakè"],"La birra si ottiene invece dai cereali."],
+["cur",1,"Quanti denti ha un adulto, compresi i denti del giudizio?","32",["28","30","36"],"Senza i denti del giudizio sono 28."],
+["cur",2,"Quale invenzione è legata a Johannes Gutenberg?","La stampa a caratteri mobili in Europa",["Il telescopio","L’orologio meccanico","La bussola"],"La mise a punto intorno al 1450."],
+["mus",0,"Quale strumento con mantice e tasti è tipico del folklore italiano?","Fisarmonica",["Flauto","Arpa","Violoncello"],"L’aria passa attraverso ance libere."],
+["mus",0,"Quale cantante italiano è noto come «il Molleggiato»?","Adriano Celentano",["Vasco Rossi","Lucio Battisti","Rino Gaetano"],"Il soprannome deriva dal suo modo di ballare."],
+["mus",1,"Chi compose l’opera «Il barbiere di Siviglia»?","Gioachino Rossini",["Gaetano Donizetti","Vincenzo Bellini","Giuseppe Verdi"],"Debuttò a Roma nel 1816."],
+["mus",1,"Quale band britannica ha pubblicato «Bohemian Rhapsody»?","Queen",["Genesis","Dire Straits","Muse"],"Il brano è del 1975."],
+["mus",1,"Quale cantante è soprannominato «The Boss»?","Bruce Springsteen",["Bob Dylan","Billy Joel","Neil Young"],"È nato nel New Jersey."],
+["mus",1,"Qual è il vero nome di Lady Gaga?","Stefani Germanotta",["Katy Hudson","Robyn Fenty","Louise Ciccone"],"Ha origini italiane."],
+["mus",2,"Chi compose le «Variazioni Goldberg»?","Johann Sebastian Bach",["Georg Friedrich Händel","Georg Philipp Telemann","Domenico Scarlatti"],"Sono scritte per clavicembalo."],
+["mus",2,"Chi compose «La sagra della primavera»?","Igor Stravinskij",["Sergej Prokof’ev","Dmitrij Šostakovič","Maurice Ravel"],"Debuttò a Parigi nel 1913."],
+["cin",0,"In quale saga compare il personaggio di Jack Sparrow?","Pirati dei Caraibi",["Indiana Jones","Ocean’s Eleven","Hook"],"Lo interpreta Johnny Depp."],
+["cin",0,"In quale film Pixar compare Dory?","Alla ricerca di Nemo",["Shark Tale","Oceania","Il gigante di ferro"],"Il film è del 2003."],
+["cin",1,"Chi interpretò Vito Corleone ne «Il padrino»?","Marlon Brando",["Al Pacino","Robert De Niro","James Caan"],"Il film è del 1972."],
+["cin",1,"Quale attore italiano interpretò il protagonista de «Il postino»?","Massimo Troisi",["Roberto Benigni","Carlo Verdone","Nino Manfredi"],"Il film uscì nel 1994."],
+["cin",1,"In quale saga compare Luke Skywalker?","Star Wars",["Star Trek","Dune","Alien"],"La saga è stata creata da George Lucas."],
+["cin",2,"Chi diresse «Il silenzio degli innocenti»?","Jonathan Demme",["David Lynch","Oliver Stone","Brian De Palma"],"Il film è del 1991."],
+["cin",2,"Quale film del 1941 di Orson Welles è considerato un caposaldo del cinema?","Quarto potere",["Casablanca","Via col vento","Il terzo uomo"],"Il titolo originale è «Citizen Kane»."],
+["cin",2,"Chi diresse «Ladri di biciclette»?","Vittorio De Sica",["Roberto Rossellini","Luchino Visconti","Pier Paolo Pasolini"],"Il film neorealista è del 1948."],
+["sto",0,"Chi guidò l’Italia fascista dal 1922?","Benito Mussolini",["Pietro Badoglio","Giovanni Giolitti","Francesco Crispi"],"Il regime durò fino al 1943-45."],
+["sto",1,"Quale faraone è famoso per la tomba scoperta nel 1922?","Tutankhamon",["Ramses II","Cheope","Akhenaton"],"La scoperta è legata a Howard Carter."],
+["sto",1,"Quale conflitto si combatté tra il 1618 e il 1648?","Guerra dei Trent’anni",["Guerra dei Cent’anni","Guerra dei Sette anni","Guerra delle Due Rose"],"Coinvolse gran parte dell’Europa."],
+["sto",1,"Quale regina britannica regnò dal 1837 al 1901?","Vittoria",["Elisabetta I","Maria Stuarda","Anna"],"Il suo nome designa un’intera epoca."],
+["sto",1,"Chi fu il primo uomo nello spazio?","Jurij Gagarin",["Neil Armstrong","Alan Shepard","Valentina Tereškova"],"Il volo è del 12 aprile 1961."],
+["sto",1,"In che anno l’Italia entrò nella Prima guerra mondiale?","1915",["1914","1916","1917"],"Dichiarò guerra all’Austria-Ungheria a maggio."],
+["sto",2,"Quale accordo del 1938 permise alla Germania di annettere i Sudeti?","Accordi di Monaco",["Patto Molotov-Ribbentrop","Conferenza di Yalta","Trattato di Locarno"],"Fu firmato anche dall’Italia."],
+["sto",2,"Quale imperatore romano istituì la tetrarchia?","Diocleziano",["Costantino","Traiano","Marco Aurelio"],"Lo fece alla fine del III secolo."],
+["geo",0,"Qual è la capitale dell’Egitto?","Il Cairo",["Alessandria","Luxor","Giza"],"È la città più popolosa del mondo arabo."],
+["geo",0,"Qual è la capitale della Grecia?","Atene",["Salonicco","Sparta","Corinto"],"Ospitò le prime Olimpiadi moderne."],
+["geo",0,"Quale fiume attraversa Roma?","Tevere",["Arno","Po","Tamigi"],"Sfocia nel Mar Tirreno."],
+["geo",1,"Qual è la capitale della Svezia?","Stoccolma",["Oslo","Copenaghen","Helsinki"],"Sorge su un arcipelago nel Mar Baltico."],
+["geo",1,"Qual è la più grande isola d’Italia?","Sicilia",["Sardegna","Elba","Capri"],"Ha circa 25.700 km²."],
+["geo",1,"Qual è la capitale della Svizzera?","Berna",["Zurigo","Ginevra","Basilea"],"Zurigo è la città più popolosa."],
+["geo",1,"Qual è il fiume più lungo del Sudamerica?","Rio delle Amazzoni",["Orinoco","Paraná","São Francisco"],"Attraversa soprattutto il Brasile."],
+["geo",2,"Qual è la capitale dell’Islanda?","Reykjavík",["Akureyri","Tórshavn","Nuuk"],"È la capitale più settentrionale di uno Stato sovrano."],
+["geo",2,"Qual è la capitale dell’Etiopia?","Addis Abeba",["Nairobi","Khartum","Asmara"],"Ospita la sede dell’Unione africana."],
+["sci",0,"Quale pianeta ha gli anelli più evidenti?","Saturno",["Giove","Marte","Venere"],"Gli anelli sono fatti soprattutto di ghiaccio."],
+["sci",0,"A quanti gradi Celsius bolle l’acqua a livello del mare?","100",["90","110","120"],"In alta quota la temperatura di ebollizione scende."],
+["sci",0,"Come si chiama la galassia in cui si trova la Terra?","Via Lattea",["Andromeda","Galassia del Triangolo","Galassia Sombrero"],"È una galassia a spirale."],
+["sci",1,"Qual è il simbolo chimico del ferro?","Fe",["Fr","Fi","Ir"],"Deriva dal latino ferrum."],
+["sci",1,"Quale organo filtra il sangue producendo l’urina?","Rene",["Fegato","Milza","Pancreas"],"Ogni persona ha di solito due reni."],
+["sci",1,"Chi pubblicò nel 1543 la teoria eliocentrica?","Niccolò Copernico",["Galileo Galilei","Tolomeo","Tycho Brahe"],"L’opera è «De revolutionibus orbium coelestium»."],
+["sci",1,"Chi inventò la pila elettrica nel 1800?","Alessandro Volta",["Luigi Galvani","Michael Faraday","André-Marie Ampère"],"L’unità volt prende il suo nome."],
+["sci",1,"Quale particella subatomica ha carica negativa?","Elettrone",["Protone","Neutrone","Fotone"],"Gli elettroni orbitano attorno al nucleo."],
+["sci",2,"Chi scoprì i raggi X nel 1895?","Wilhelm Röntgen",["Henri Becquerel","Pierre Curie","Max Planck"],"Ricevette il primo Premio Nobel per la fisica, nel 1901."],
+["spo",0,"Quanti tempi dura una partita di calcio?","2",["3","4","1"],"Ciascun tempo dura 45 minuti."],
+["spo",0,"Quale sport si pratica sulla neve con due assi ai piedi?","Sci",["Pattinaggio","Hockey","Curling"],"Esistono molte discipline, tra cui discesa e slalom."],
+["spo",0,"In quale sport gareggiava Valentino Rossi?","Motociclismo",["Automobilismo","Ciclismo","Sci"],"Ha vinto nove titoli mondiali."],
+["spo",1,"In quale sport si disputa la Coppa Davis?","Tennis",["Golf","Nuoto","Scherma"],"È una competizione a squadre nazionali."],
+["spo",1,"Quale squadra di calcio è detta «la Vecchia Signora»?","Juventus",["Inter","Milan","Roma"],"È una squadra di Torino."],
+["spo",1,"In quale città si trova lo stadio Maracanã?","Rio de Janeiro",["San Paolo","Brasília","Buenos Aires"],"Ha ospitato finali dei Mondiali del 1950 e del 2014."],
+["spo",1,"In che anno si tennero le Olimpiadi estive di Roma?","1960",["1956","1964","1968"],"Si disputarono tra agosto e settembre."],
+["spo",1,"Quale nazionale vinse l’Europeo di calcio disputato nel 2021?","Italia",["Inghilterra","Spagna","Francia"],"Batté l’Inghilterra ai rigori a Wembley."],
+["spo",2,"Chi fu capocannoniere del Mondiale di calcio 1982 e vinse con l’Italia?","Paolo Rossi",["Roberto Baggio","Alessandro Altobelli","Marco Tardelli"],"Segnò sei gol."],
+["art",0,"Chi dipinse l’«Ultima cena» conservata a Milano?","Leonardo da Vinci",["Caravaggio","Raffaello","Giotto"],"È nel refettorio di Santa Maria delle Grazie."],
+["art",1,"Chi scrisse «I tre moschettieri»?","Alexandre Dumas",["Victor Hugo","Honoré de Balzac","Gustave Flaubert"],"Il romanzo è del 1844."],
+["art",1,"Chi scrisse «1984»?","George Orwell",["Aldous Huxley","Ray Bradbury","H. G. Wells"],"Fu pubblicato nel 1949."],
+["art",1,"Quale artista è famoso per le lattine di zuppa Campbell?","Andy Warhol",["Roy Lichtenstein","Jackson Pollock","Keith Haring"],"È uno dei principali esponenti della Pop Art."],
+["art",1,"Chi scrisse «Il giovane Holden»?","J. D. Salinger",["Jack Kerouac","Ernest Hemingway","F. Scott Fitzgerald"],"Fu pubblicato nel 1951."],
+["art",1,"Chi scrisse «Il Principe»?","Niccolò Machiavelli",["Francesco Guicciardini","Baldassarre Castiglione","Ludovico Ariosto"],"Fu scritto nel 1513 e pubblicato dopo la sua morte."],
+["art",2,"Chi scrisse «Il deserto dei Tartari»?","Dino Buzzati",["Italo Calvino","Cesare Pavese","Carlo Levi"],"Il romanzo è del 1940."],
+["art",2,"Chi dipinse «La Libertà che guida il popolo»?","Eugène Delacroix",["Théodore Géricault","Jacques-Louis David","Gustave Courbet"],"Il dipinto è del 1830."],
+["art",2,"Quale architetto progettò il museo Guggenheim di Bilbao?","Frank Gehry",["Zaha Hadid","Renzo Piano","Norman Foster"],"Fu inaugurato nel 1997."],
+["gio",0,"Quanti giocatori servono per una partita a scacchi?","2",["1","3","4"],"Uno gioca con i bianchi e l’altro con i neri."],
+["gio",0,"Come si chiama la principessa che Mario salva di solito?","Peach",["Zelda","Daisy","Rosalina"],"Vive nel Regno dei Funghi."],
+["gio",0,"Quale azienda produce la console Xbox?","Microsoft",["Sony","Nintendo","Sega"],"La prima Xbox uscì nel 2001."],
+["gio",0,"Quale supereroe è detto l’Uomo d’Acciaio?","Superman",["Batman","Flash","Lanterna Verde"],"Proviene dal pianeta Krypton."],
+["gio",1,"Quale gioco da tavolo ha come scopo conquistare territori con carri armati?","Risiko",["Cluedo","Scarabeo","Taboo"],"Si gioca su un planisfero diviso in territori."],
+["gio",1,"Quale battle royale di Epic Games è famoso per i balli dei personaggi?","Fortnite",["Apex Legends","PUBG","Call of Duty"],"Uscì nel 2017."],
+["gio",2,"Quale gioco da tavolo di origine cinese si gioca con pietre bianche e nere?","Go",["Mahjong","Shogi","Xiangqi"],"Si gioca su una griglia detta goban."],
+["gio",2,"In che anno uscirono in Giappone i primi giochi Pokémon?","1996",["1992","1999","2001"],"Furono pubblicati per Game Boy."],
+["gio",2,"Chi creò il fumetto «Corto Maltese»?","Hugo Pratt",["Milo Manara","Guido Crepax","Benito Jacovitti"],"Il personaggio esordì nel 1967."],
+["cur",0,"Quanti mesi dell’anno hanno 31 giorni?","7",["5","6","8"],"Gli altri hanno 30 giorni, tranne febbraio."],
+["cur",0,"Quale bevanda calda si ottiene dai chicchi tostati di una pianta tropicale?","Caffè",["Tè","Cioccolata","Orzo"],"Le piante principali sono Arabica e Robusta."],
+["cur",0,"Quale animale produce la seta?","Baco da seta",["Ragno","Ape","Formica"],"In realtà è la larva di una falena."],
+["cur",1,"Quale animale cambia colore e ha gli occhi che si muovono in modo indipendente?","Camaleonte",["Geco","Iguana","Salamandra"],"Cambia colore anche per comunicare."],
+["cur",1,"In quale città ha sede l’ONU?","New York",["Ginevra","Washington","Bruxelles"],"Il Palazzo di Vetro è a Manhattan."],
+["cur",1,"Quale festa si celebra in Italia il 25 aprile?","Festa della Liberazione",["Festa della Repubblica","Festa dei lavoratori","Ferragosto"],"Ricorda la liberazione dal nazifascismo."],
+["cur",1,"Quale dolce italiano contiene mascarpone, caffè e savoiardi?","Tiramisù",["Panna cotta","Cassata","Zabaione"],"Viene spolverato di cacao amaro."],
+["cur",2,"Di quale elemento è fatta la grafite delle matite?","Carbonio",["Piombo","Stagno","Zinco"],"Il nome «mina di piombo» è solo un residuo storico."],
+["cur",2,"In quale città indiana ha sede Bollywood?","Mumbai",["Nuova Delhi","Calcutta","Chennai"],"Il nome unisce Bombay e Hollywood."],
+["att",0,"Quale nazionale ha vinto i Mondiali di calcio del 2026?","Spagna",["Argentina","Francia","Inghilterra"],"Ha battuto l’Argentina 1-0 ai supplementari il 19 luglio 2026, con gol di Ferran Torres. Rif.: 07/2026."],
+["att",0,"In quali tre paesi si sono giocati i Mondiali di calcio del 2026?","Stati Uniti, Canada e Messico",["Brasile, Argentina e Uruguay","Spagna, Portogallo e Marocco","Giappone, Corea del Sud e Cina"],"Per la prima volta c’erano 48 squadre. Rif.: 07/2026."],
+["att",0,"Quale città ha ospitato le Olimpiadi estive del 2024?","Parigi",["Los Angeles","Tokyo","Roma"],"Si sono svolte tra il 26 luglio e l’11 agosto 2024. Rif.: 2024."],
+["att",0,"Quali città italiane hanno ospitato le Olimpiadi invernali del 2026?","Milano e Cortina d’Ampezzo",["Torino e Sestriere","Roma e Cortina d’Ampezzo","Bormio e Bolzano"],"I Giochi si sono tenuti dal 6 al 22 febbraio 2026. Rif.: 02/2026."],
+["att",0,"Quale nome ha scelto il papa eletto l’8 maggio 2025?","Leone XIV",["Francesco II","Pio XIII","Giovanni Paolo III"],"È il primo papa statunitense, nato a Chicago. Rif.: 05/2025."],
+["att",0,"Chi era il papa prima di Leone XIV?","Francesco",["Benedetto XVI","Giovanni Paolo II","Paolo VI"],"Morì il 21 aprile 2025. Rif.: 04/2025."],
+["att",0,"Quale nazionale ha vinto gli Europei di calcio del 2024?","Spagna",["Inghilterra","Francia","Germania"],"Batté l’Inghilterra 2-1 in finale a Berlino. Rif.: 07/2024."],
+["att",0,"Quale cattedrale parigina è stata riaperta nel dicembre 2024 dopo l’incendio del 2019?","Notre-Dame",["Sainte-Chapelle","Sacro Cuore","Saint-Denis"],"La riapertura è avvenuta il 7 e 8 dicembre 2024. Rif.: 12/2024."],
+["att",0,"Chi è stato incoronato re del Regno Unito il 6 maggio 2023?","Carlo III",["William","Harry","Giorgio VII"],"Era succeduto alla madre Elisabetta II, morta nel settembre 2022. Rif.: 05/2023."],
+["att",0,"Quale chatbot di OpenAI è stato lanciato a fine novembre 2022?","ChatGPT",["Siri","Alexa","Cortana"],"Ha reso popolare l’intelligenza artificiale generativa. Rif.: 11/2022."],
+["att",0,"Quale azienda ha sviluppato il razzo Starship?","SpaceX",["Blue Origin","Boeing","Lockheed Martin"],"È stato progettato per missioni sulla Luna e su Marte. Rif.: 2026."],
+["att",1,"Chi ha vinto Wimbledon nel 2025, primo italiano a riuscirci in singolare maschile?","Jannik Sinner",["Matteo Berrettini","Lorenzo Musetti","Flavio Cobolli"],"In finale ha battuto Carlos Alcaraz il 13 luglio 2025. Rif.: 07/2025."],
+["att",1,"Chi è stato il primo italiano numero 1 del ranking ATP?","Jannik Sinner",["Matteo Berrettini","Lorenzo Musetti","Adriano Panatta"],"Ha raggiunto la vetta il 10 giugno 2024. Rif.: 06/2024."],
+["att",1,"Quale squadra ha vinto la Champions League 2024-25 battendo l’Inter in finale?","Paris Saint-Germain",["Manchester City","Real Madrid","Bayern Monaco"],"Ha vinto 5-0 a Monaco di Baviera il 31 maggio 2025. Rif.: 05/2025."],
+["att",1,"Chi ha vinto l’Eurovision 2024 per la Svizzera?","Nemo",["Baby Lasagna","Marcus & Martinus","Angelina Mango"],"Ha vinto con il brano «The Code». Rif.: 05/2024."],
+["att",1,"Quale paese ha vinto l’Eurovision 2025?","Austria",["Svezia","Israele","Estonia"],"Ha vinto JJ con «Wasted Love». Rif.: 05/2025."],
+["att",1,"Chi ha vinto il Festival di Sanremo 2025?","Olly",["Lucio Corsi","Brunori Sas","Giorgia"],"Ha vinto con «Balorda nostalgia». Rif.: 02/2025."],
+["att",1,"Chi ha vinto il Festival di Sanremo 2024?","Angelina Mango",["Annalisa","Geolier","Ghali"],"Ha vinto con «La noia». Rif.: 02/2024."],
+["att",1,"Quale film ha vinto l’Oscar come miglior film nel 2025?","Anora",["The Brutalist","Emilia Pérez","Conclave"],"La cerimonia si è tenuta il 2 marzo 2025. Rif.: 03/2025."],
+["att",1,"Chi ha vinto il Tour de France 2025?","Tadej Pogačar",["Jonas Vingegaard","Remco Evenepoel","Primož Roglič"],"È il suo quarto titolo. Rif.: 07/2025."],
+["att",1,"Quale paese ha adottato l’euro il 1° gennaio 2023, diventando il ventesimo?","Croazia",["Bulgaria","Romania","Polonia"],"Ha lasciato la kuna. Rif.: 01/2023."],
+["att",1,"Quale paese è entrato nella NATO nel marzo 2024 come 32° membro?","Svezia",["Finlandia","Ucraina","Svizzera"],"La Finlandia era entrata nell’aprile 2023. Rif.: 03/2024."],
+["att",1,"Quale città ospiterà le Olimpiadi estive del 2028?","Los Angeles",["Brisbane","Parigi","Mumbai"],"Brisbane ospiterà quelle del 2032. Rif.: 10/2026."],
+["att",1,"Quale squadra ha vinto lo scudetto 2024-25 in Serie A?","Napoli",["Inter","Atalanta","Juventus"],"Allenatore Antonio Conte. Rif.: 05/2025."],
+["att",1,"Come si chiama l’Anno santo celebrato a Roma nel 2025?","Giubileo",["Concordato","Sinodo","Angelus"],"Il tema era «Pellegrini di speranza». Rif.: 2025."],
+["att",1,"Quale nazionale ha eliminato l’Italia ai playoff per i Mondiali 2026?","Bosnia ed Erzegovina",["Svezia","Macedonia del Nord","Polonia"],"Ai rigori, nella finale playoff del 31 marzo 2026. Rif.: 03/2026."],
+["att",1,"Quanti Stati membri conta l’Unione europea dopo la Brexit?","27",["25","28","30"],"Il Regno Unito è uscito il 31 gennaio 2020. Rif.: 10/2026."],
+["att",2,"Dove si è tenuta la conferenza sul clima COP30 del 2025?","Belém, in Brasile",["Baku, in Azerbaigian","Dubai, negli Emirati","Glasgow, nel Regno Unito"],"Si è svolta nel novembre 2025. Rif.: 11/2025."],
+["att",2,"Quale paese ospiterà i Mondiali di calcio del 2030 insieme a Portogallo e Marocco?","Spagna",["Italia","Francia","Egitto"],"Alcune partite saranno in Sud America per il centenario. Rif.: 2024."],
+["att",2,"Quale paese ospiterà i Mondiali di calcio del 2034?","Arabia Saudita",["Qatar","Egitto","India"],"L’assegnazione risale al dicembre 2024. Rif.: 12/2024."],
+["att",2,"Quale missione atterrò nell’agosto 2023 vicino al polo sud della Luna?","Chandrayaan-3",["Chandrayaan-2","Luna-25","Mangalyaan"],"È una missione indiana, atterrata il 23 agosto 2023. Rif.: 08/2023."],
+["att",2,"Chi ha ricevuto il Premio Nobel per la letteratura 2024?","Han Kang",["Haruki Murakami","Annie Ernaux","Jon Fosse"],"È una scrittrice sudcoreana. Rif.: 10/2024."],
+["att",2,"Per quali studi Hopfield e Hinton hanno ricevuto il Nobel per la fisica 2024?","Reti neurali artificiali e apprendimento automatico",["Onde gravitazionali","Bosone di Higgs","Computer quantistici"],"I loro lavori sono alla base dell’intelligenza artificiale moderna. Rif.: 10/2024."],
+["att",2,"Chi ha segnato il gol decisivo nella finale dei Mondiali di calcio 2026?","Ferran Torres",["Lamine Yamal","Nico Williams","Mikel Oyarzabal"],"Ha segnato al 106’, nei supplementari. Rif.: 07/2026."],
+["att",2,"Chi è stato eletto miglior giocatore dei Mondiali di calcio 2026?","Rodri",["Lamine Yamal","Lionel Messi","Kylian Mbappé"],"Aveva ottenuto lo stesso riconoscimento agli Europei 2024. Rif.: 07/2026."],
+["mus",0,"Quante corde ha un violino?","4",["3","5","6"],"Sono accordate per quinte: sol, re, la, mi."],
+["mus",0,"Quale cantante è detta «la regina del pop»?","Madonna",["Beyoncé","Cher","Whitney Houston"],"Il suo primo album è del 1983."],
+["mus",1,"Da quale opera di Puccini è tratta l’aria «Nessun dorma»?","Turandot",["Tosca","Madama Butterfly","La Bohème"],"L’opera restò incompiuta alla morte del compositore."],
+["mus",1,"Quale gruppo ha pubblicato «Hotel California»?","Eagles",["Fleetwood Mac","The Doors","Steely Dan"],"L’album è del 1976."],
+["mus",1,"Chi era il cantante dei Nirvana?","Kurt Cobain",["Eddie Vedder","Chris Cornell","Layne Staley"],"La band nacque ad Aberdeen, nello stato di Washington."],
+["mus",1,"Quale cantautore italiano ha scritto «Piazza Grande»?","Lucio Dalla",["Francesco Guccini","Antonello Venditti","Fabrizio De André"],"Il brano è del 1972."],
+["mus",2,"Quale compositore lasciò incompiuto il «Requiem» alla morte nel 1791?","Wolfgang Amadeus Mozart",["Giuseppe Verdi","Johannes Brahms","Gabriel Fauré"],"Fu completato da un suo allievo, Franz Xaver Süssmayr."],
+["mus",2,"Quale compositore scrisse le «Danze ungheresi»?","Johannes Brahms",["Franz Liszt","Béla Bartók","Antonín Dvořák"],"Furono pubblicate nel 1869 e nel 1880."],
+["mus",2,"Chi vinse l’Oscar per la colonna sonora de «Il postino»?","Luis Bacalov",["Ennio Morricone","Nicola Piovani","Nino Rota"],"Il premio arrivò nel 1996."],
+["cin",0,"Quale film d’animazione ha come protagonista un orco verde?","Shrek",["Cars","Ratatouille","Toy Story"],"Il primo film è del 2001."],
+["cin",0,"Quale attore interpreta Iron Man nei film Marvel?","Robert Downey Jr.",["Chris Evans","Chris Hemsworth","Mark Ruffalo"],"Debuttò nel ruolo nel 2008."],
+["cin",1,"Chi diresse «Il gladiatore» (2000)?","Ridley Scott",["Mel Gibson","Oliver Stone","Michael Bay"],"Il film vinse cinque Oscar."],
+["cin",1,"Quale attore interpreta Massimo Decimo Meridio ne «Il gladiatore»?","Russell Crowe",["Brad Pitt","Gerard Butler","Joaquin Phoenix"],"Per questo ruolo vinse l’Oscar come miglior attore."],
+["cin",1,"Chi ha composto le musiche di «Star Wars»?","John Williams",["Hans Zimmer","Howard Shore","Ennio Morricone"],"Ha scritto anche le colonne sonore di «Jurassic Park» e «Indiana Jones»."],
+["cin",1,"Chi interpretò Rick Blaine in «Casablanca» (1942)?","Humphrey Bogart",["Cary Grant","Clark Gable","James Stewart"],"Accanto a Ingrid Bergman."],
+["cin",2,"In quale film compare l’astronave Nostromo?","Alien",["Star Wars","Interstellar","Armageddon"],"Il film di Ridley Scott è del 1979."],
+["cin",2,"Chi interpretò Rossella O’Hara in «Via col vento»?","Vivien Leigh",["Ingrid Bergman","Greta Garbo","Bette Davis"],"Il film è del 1939."],
+["cin",2,"Chi diresse «Roma città aperta» (1945)?","Roberto Rossellini",["Vittorio De Sica","Luchino Visconti","Federico Fellini"],"È uno dei film simbolo del neorealismo."],
+["sto",0,"In che anno scoppiò la Seconda guerra mondiale?","1939",["1936","1940","1941"],"Con l’invasione tedesca della Polonia, il 1° settembre."],
+["sto",0,"Quale città fu fondata da Romolo secondo la tradizione?","Roma",["Alba Longa","Ostia","Tivoli"],"La data tradizionale è il 753 a.C."],
+["sto",1,"Quale condottiero macedone conquistò l’Impero persiano?","Alessandro Magno",["Filippo II","Dario III","Leonida"],"Morì a Babilonia nel 323 a.C."],
+["sto",1,"Quale evento del 1517 avviò la Riforma protestante?","Le 95 tesi di Lutero",["Il Concilio di Trento","La pace di Augusta","Il sacco di Roma"],"Martin Lutero le rese pubbliche a Wittenberg."],
+["sto",1,"Quale statista britannico guidò il paese durante gran parte della Seconda guerra mondiale?","Winston Churchill",["Neville Chamberlain","Clement Attlee","Anthony Eden"],"Divenne primo ministro nel maggio 1940."],
+["sto",1,"Quale presidente guidò l’Unione nella guerra di secessione americana?","Abraham Lincoln",["Ulysses Grant","Andrew Jackson","Theodore Roosevelt"],"La guerra durò dal 1861 al 1865."],
+["sto",2,"Chi scrisse «Le Storie» nel V secolo a.C., detto «padre della storia»?","Erodoto",["Tucidide","Plutarco","Senofonte"],"Racconta soprattutto le guerre persiane."],
+["sto",2,"Quale battaglia del 1571 vide la Lega Santa sconfiggere gli Ottomani?","Lepanto",["Azio","Trafalgar","Poitiers"],"Fu uno scontro navale nel golfo di Patrasso."],
+["sto",2,"Chi fu il primo imperatore della Cina unificata, nel 221 a.C.?","Qin Shi Huang",["Kublai Khan","Han Wudi","Confucio"],"A lui si lega l’Esercito di terracotta."],
+["geo",0,"Quale mare separa l’Italia dai Balcani?","Adriatico",["Tirreno","Ionio","Ligure"],"È un mare stretto e poco profondo a nord."],
+["geo",0,"Qual è la capitale della Russia?","Mosca",["San Pietroburgo","Kiev","Minsk"],"Sorge sul fiume Moscova."],
+["geo",1,"Quale catena montuosa sudamericana è la più lunga del mondo?","Ande",["Alpi","Montagne Rocciose","Himalaya"],"Si estende per circa 7.000 km."],
+["geo",1,"Qual è la capitale della Norvegia?","Oslo",["Bergen","Stoccolma","Helsinki"],"Si affaccia sul fiordo omonimo."],
+["geo",1,"Quale fiume attraversa Budapest?","Danubio",["Vistola","Elba","Moldava"],"Divide la città in Buda e Pest."],
+["geo",1,"Qual è la capitale della Polonia?","Varsavia",["Cracovia","Danzica","Breslavia"],"Cracovia è stata la capitale storica."],
+["geo",1,"Qual è la montagna più alta dell’Africa?","Kilimangiaro",["Monte Kenya","Monte Stanley","Toubkal"],"Si trova in Tanzania."],
+["geo",2,"Qual è la capitale della Colombia?","Bogotá",["Medellín","Cali","Quito"],"Sorge a circa 2.600 metri di altitudine."],
+["geo",2,"Qual è il lago più grande d’Africa per superficie?","Lago Vittoria",["Lago Tanganica","Lago Malawi","Lago Ciad"],"Lo dividono Uganda, Kenya e Tanzania."],
+["sci",0,"Quale organo usiamo per respirare?","Polmoni",["Stomaco","Reni","Milza"],"Scambiano ossigeno e anidride carbonica."],
+["sci",0,"Qual è il pianeta più vicino al Sole?","Mercurio",["Venere","Terra","Marte"],"Compie un’orbita in circa 88 giorni."],
+["sci",1,"Qual è l’unità di misura della frequenza?","Hertz",["Watt","Ohm","Tesla"],"Un hertz equivale a un ciclo al secondo."],
+["sci",1,"Qual è il simbolo chimico dell’argento?","Ag",["Ar","Au","Si"],"Deriva dal latino argentum."],
+["sci",1,"Chi è considerato il padre della psicoanalisi?","Sigmund Freud",["Carl Jung","Ivan Pavlov","B. F. Skinner"],"Sviluppò le sue teorie a Vienna."],
+["sci",1,"Chi osservò con il telescopio le lune di Giove nel 1610?","Galileo Galilei",["Giovanni Schiaparelli","Evangelista Torricelli","Enrico Fermi"],"Le chiamò «astri medicei»."],
+["sci",2,"Chi realizzò la prima reazione nucleare a catena controllata nel 1942?","Enrico Fermi",["Ettore Majorana","Emilio Segrè","Bruno Pontecorvo"],"L’esperimento si tenne a Chicago."],
+["sci",2,"Chi scoprì l’elettrone nel 1897?","J. J. Thomson",["Ernest Rutherford","Niels Bohr","James Chadwick"],"Per questo ricevette il Nobel per la fisica nel 1906."],
+["sci",2,"Quale forza tiene uniti protoni e neutroni nel nucleo?","Interazione forte",["Gravità","Forza elettromagnetica","Interazione debole"],"È la più intensa tra le quattro forze fondamentali."],
+["spo",0,"In quale sport gareggiava Federica Pellegrini?","Nuoto",["Atletica","Ginnastica","Tuffi"],"Vinse l’oro olimpico a Pechino 2008."],
+["spo",0,"In quale sport si combatte sul tatami?","Judo",["Scherma","Pugilato","Tiro con l’arco"],"Il judo è sport olimpico dal 1964."],
+["spo",1,"Quale squadra di calcio è detta «Blaugrana»?","Barcellona",["Valencia","Siviglia","Atlético Madrid"],"Il nome richiama i colori blu e granata."],
+["spo",1,"In quale città gioca il Boca Juniors?","Buenos Aires",["Montevideo","Rosario","Santiago"],"Lo stadio è la Bombonera."],
+["spo",1,"In quale sport si disputa il torneo Sei Nazioni?","Rugby",["Calcio","Hockey","Pallamano"],"Vi partecipano anche Italia, Francia e Inghilterra."],
+["spo",1,"Quale tennista italiana vinse il Roland Garros 2010?","Francesca Schiavone",["Flavia Pennetta","Sara Errani","Roberta Vinci"],"Batté in finale l’australiana Samantha Stosur."],
+["spo",1,"Quale tennista italiana vinse gli US Open 2015?","Flavia Pennetta",["Francesca Schiavone","Sara Errani","Roberta Vinci"],"In finale batté la connazionale Roberta Vinci."],
+["spo",2,"Quale ciclista italiano vinse sia il Giro sia il Tour nel 1998?","Marco Pantani",["Ivan Basso","Gilberto Simoni","Paolo Savoldelli"],"Fu l’ultimo a riuscire nella doppietta nel Novecento."],
+["art",0,"Chi ha scritto «Harry Potter»?","J. K. Rowling",["Roald Dahl","J. R. R. Tolkien","C. S. Lewis"],"Il primo libro è del 1997."],
+["art",1,"Chi ha scritto «Il Signore degli Anelli»?","J. R. R. Tolkien",["C. S. Lewis","George R. R. Martin","Terry Pratchett"],"Fu pubblicato tra il 1954 e il 1955."],
+["art",1,"Chi dipinse «Il grido»?","Edvard Munch",["Gustav Klimt","Egon Schiele","Paul Gauguin"],"Ne esistono più versioni, la prima del 1893."],
+["art",1,"Chi scrisse «Il vecchio e il mare»?","Ernest Hemingway",["John Steinbeck","William Faulkner","Mark Twain"],"Fu pubblicato nel 1952."],
+["art",1,"Quale pittore realizzò «La vocazione di san Matteo»?","Caravaggio",["Tiziano","Tintoretto","Giorgione"],"È nella chiesa di San Luigi dei Francesi a Roma."],
+["art",1,"Chi scrisse «La metamorfosi»?","Franz Kafka",["Thomas Mann","Hermann Hesse","Robert Musil"],"Il racconto è del 1915."],
+["art",1,"Chi scolpì «Il pensatore»?","Auguste Rodin",["Constantin Brâncuși","Antonio Canova","Donatello"],"Faceva parte della «Porta dell’Inferno»."],
+["art",2,"Chi scrisse «Ulisse» (1922)?","James Joyce",["Samuel Beckett","Virginia Woolf","T. S. Eliot"],"La storia si svolge in un solo giorno, a Dublino."],
+["art",2,"Quale architetto progettò la Sagrada Família?","Antoni Gaudí",["Le Corbusier","Santiago Calatrava","Oscar Niemeyer"],"La basilica di Barcellona è ancora in costruzione."],
+["gio",0,"Quante facce ha un dado comune?","6",["4","8","12"],"Le facce opposte sommano sempre 7."],
+["gio",0,"Come si chiama il gioco in cui si affondano le navi avversarie su una griglia?","Battaglia navale",["Tris","Forza 4","Dama"],"Ogni giocatore nasconde la propria flotta."],
+["gio",0,"Chi è lo zio ricco di Paperino?","Paperon de’ Paperoni",["Archimede Pitagorico","Gastone","Gancio"],"Il suo nome originale è Scrooge McDuck."],
+["gio",1,"Quale videogioco ha come protagonista Lara Croft?","Tomb Raider",["Uncharted","Resident Evil","Prince of Persia"],"La serie esordì nel 1996."],
+["gio",1,"Quale azienda ha creato il Game Boy?","Nintendo",["Sega","Atari","Sony"],"La console portatile uscì nel 1989."],
+["gio",1,"Quale gioco da tavolo si basa sulla formazione di parole con tessere di lettere?","Scarabeo",["Taboo","Cluedo","Dixit"],"È la versione italiana dello Scrabble."],
+["gio",2,"Quale videogioco del 1972 è considerato il primo grande successo commerciale?","Pong",["Pac-Man","Space Invaders","Tetris"],"Fu realizzato da Atari."],
+["gio",2,"Chi ha creato il personaggio di Astro Boy?","Osamu Tezuka",["Akira Toriyama","Hayao Miyazaki","Go Nagai"],"Il manga debuttò nel 1952."],
+["gio",2,"Quale studio d’animazione ha prodotto «La città incantata»?","Studio Ghibli",["Toei Animation","Pixar","Madhouse"],"Il film di Miyazaki è del 2001."],
+["cur",0,"Quale animale allattò Romolo e Remo secondo la leggenda?","Una lupa",["Una capra","Un’orsa","Una cerva"],"La Lupa capitolina è il simbolo di Roma."],
+["cur",0,"Quale ortaggio fa lacrimare chi lo taglia?","Cipolla",["Carota","Patata","Zucchina"],"Libera composti irritanti per gli occhi."],
+["cur",0,"Qual è la moneta ufficiale del Regno Unito?","Sterlina",["Euro","Dollaro","Corona"],"Il suo codice è GBP."],
+["cur",1,"Quale piatto giapponese è fatto di riso, pesce crudo e alga?","Sushi",["Ramen","Tempura","Tofu"],"Esistono molte varianti, tra cui nigiri e maki."],
+["cur",1,"Quale animale costruisce dighe nei fiumi?","Castoro",["Lontra","Marmotta","Nutria"],"Usa tronchi e fango."],
+["cur",1,"Qual è la lingua ufficiale del Brasile?","Portoghese",["Spagnolo","Inglese","Francese"],"Fu portata dai colonizzatori portoghesi."],
+["cur",2,"Quale pianta fornisce lo zucchero prodotto in Italia?","Barbabietola da zucchero",["Mais","Sorgo","Patata"],"Lo zucchero può venire anche dalla canna."],
+["cur",2,"Quante lettere ha l’alfabeto italiano?","21",["26","23","22"],"J, K, W, X e Y compaiono solo in parole straniere."],
+["cur",2,"Di che colore è la scatola nera di un aereo?","Arancione",["Nera","Gialla","Rossa"],"Il colore serve a ritrovarla più facilmente."],
+["att",0,"Quale paese ha ospitato gli Europei di calcio del 2024?","Germania",["Francia","Spagna","Inghilterra"],"La finale si è giocata a Berlino. Rif.: 07/2024."],
+["att",1,"Quale paese ha superato la Cina nel 2023 come più popoloso del mondo?","India",["Stati Uniti","Indonesia","Pakistan"],"Secondo le stime delle Nazioni Unite. Rif.: 04/2023."],
+["att",1,"Chi ha vinto il Pallone d’Oro 2024?","Rodri",["Vinícius Júnior","Jude Bellingham","Lamine Yamal"],"Era il centrocampista del Manchester City. Rif.: 10/2024."],
+["att",1,"Quale azienda ha presentato nel 2023 il visore Vision Pro?","Apple",["Meta","Sony","Microsoft"],"Annunciato a giugno 2023, è in vendita dal 2024. Rif.: 06/2023."],
+["att",2,"Quale film ha vinto la Palma d’oro a Cannes 2024?","Anora",["Emilia Pérez","The Substance","Parthenope"],"Il regista è Sean Baker. Rif.: 05/2024."],
+["att",2,"Quale nazionale ha vinto i Mondiali di calcio femminili del 2023?","Spagna",["Inghilterra","Stati Uniti","Svezia"],"Ha battuto l’Inghilterra 1-0 in finale. Rif.: 08/2023."],
+["att",2,"Quale nazionale ha vinto la Coppa del Mondo di rugby 2023?","Sudafrica",["Nuova Zelanda","Inghilterra","Francia"],"Ha battuto la Nuova Zelanda 12-11 a Parigi. Rif.: 10/2023."],
+["att",2,"A chi è andato il Nobel per la pace 2024?","Nihon Hidankyo",["Greta Thunberg","Maria Ressa","Alexei Navalny"],"È l’organizzazione dei sopravvissuti alle bombe atomiche in Giappone. Rif.: 10/2024."]
+].map((q,i)=>({id:i,c:q[0],d:q[1],t:q[2],a:q[3],w:q[4],e:q[5]}));
+// Melodie di pubblico dominio sintetizzate nel browser: [titolo, difficoltà, bpm, note, spiegazione]
+// Note: lettera+eventuale #/b+ottava; durata: nessuna=1 tempo, q=¼, h=½, d=1,5, w=2, t=3, f=4; r=pausa
+const MEL=[
+["Inno alla gioia",0,112,"e4 e4 f4 g4 g4 f4 e4 d4 c4 c4 d4 e4 e4d d4h d4w e4 e4 f4 g4 g4 f4 e4 d4 c4 c4 d4 e4 d4d c4h c4w","Tema del finale della Nona sinfonia di Beethoven (1824), inno dell’Unione europea."],
+["Per Elisa",0,140,"e5h d#5h e5h d#5h e5h b4h d5h c5h a4d rh c4h e4h a4h b4d rh e4h g#4h b4h c5d rh e5h d#5h e5h d#5h e5h b4h d5h c5h a4d","Bagatella in la minore di Beethoven, composta intorno al 1810."],
+["Quinta sinfonia di Beethoven",0,100,"g4h g4h g4h eb4f rh f4h f4h f4h d4f","Il celebre motivo iniziale della Sinfonia n. 5 in do minore, presentata nel 1808."],
+["Canone di Pachelbel",1,76,"f#5w e5w d5w c#5w b4w a4w b4w c#5w","Canone in re maggiore di Johann Pachelbel, scritto a fine Seicento."],
+["Minuetto in sol maggiore",2,120,"d5 g4h a4h b4h c5h d5 g4 g4 e5 c5h d5h e5h f#5h g5 g4 g4","Contenuto nel Quaderno di Anna Magdalena Bach (1725), oggi attribuito a Christian Petzold."],
+["Marcia turca di Mozart",1,100,"b4q a4q g#4q a4q c5h rh d5q c5q b4q c5q e5h rh f5q e5q d#5q e5q b5q a5q g#5q a5q b5q a5q g#5q a5q c6w","Il Rondò alla turca, finale della Sonata per pianoforte K. 331 (1783 circa)."],
+["Astro del ciel",0,66,"g4d a4h g4 e4t g4d a4h g4 e4t d5w d5 b4t c5w c5 g4t a4w a4 c5d b4h a4 g4d a4h g4 e4t a4w a4 c5d b4h a4 g4d a4h g4 e4t","«Stille Nacht», musica di Franz Xaver Gruber del 1818."],
+["Jingle Bells",0,140,"e4 e4 e4w e4 e4 e4w e4 g4 c4d d4h e4f","Canzone di James Lord Pierpont, pubblicata nel 1857."],
+["Tanti auguri a te",0,100,"g4d g4h a4 g4 c5 b4w g4d g4h a4 g4 d5 c5w g4d g4h g5 e5 c5 b4 a4w f5d f5h e5 c5 d5 c5w","La melodia nasce nel 1893 dalla canzone «Good Morning to All» delle sorelle Hill."],
+["Brilla brilla piccola stella",0,100,"c4 c4 g4 g4 a4 a4 g4w f4 f4 e4 e4 d4 d4 c4w g4 g4 f4 f4 e4 e4 d4w g4 g4 f4 f4 e4 e4 d4w c4 c4 g4 g4 a4 a4 g4w f4 f4 e4 e4 d4 d4 c4w","Melodia francese «Ah! vous dirai-je, maman», su cui Mozart scrisse delle variazioni."],
+["Fra Martino campanaro",0,120,"c4 d4 e4 c4 c4 d4 e4 c4 e4 f4 g4w e4 f4 g4w g4h a4h g4h f4h e4 c4 g4h a4h g4h f4h e4 c4 c4 g3 c4w c4 g3 c4w","Versione italiana della canzone francese «Frère Jacques»."],
+["Mary had a little lamb",0,120,"e4 d4 c4 d4 e4 e4 e4w d4 d4 d4w e4 g4 g4w e4 d4 c4 d4 e4 e4 e4 e4 d4 d4 e4 d4 c4f","Filastrocca americana dell’Ottocento."],
+["When the Saints Go Marching In",1,110,"c4 e4 f4 g4w c4 e4 f4 g4w c4 e4 f4 g4 e4 c4 e4 d4w","Canto tradizionale americano diventato un classico del jazz di New Orleans."],
+["Toccata e fuga in re minore",1,90,"a5h g5h a5t rw g5h f5h e5h d5h c#5h d5f","Brano per organo attribuito a Johann Sebastian Bach."],
+["Au clair de la lune",1,100,"c4 c4 c4 d4 e4w d4w c4 e4 d4 d4 c4f","Canzone popolare francese del Settecento."],
+["Nella vecchia fattoria",0,130,"c4 c4 c4 g3 a3 a3 g3w e4 e4 d4 d4 c4w","Canzone tradizionale nota in inglese come «Old MacDonald Had a Farm»."]
+];
+Q.push(...MEL.map((m,i)=>({id:1000+i,c:"mus",d:m[1],t:"Ascolta la melodia: quale brano è?",a:m[0],w:[],e:m[4],au:m})));
+let AC=null,PL=null;
+const NO={c:0,d:2,e:4,f:5,g:7,a:9,b:11},DU={"":1,q:.25,h:.5,d:1.5,w:2,t:3,f:4};
+function stopMel(){if(PL)PL.forEach(o=>{try{o.stop()}catch(e){}});PL=null}
+function playMel(m){stopMel();const C=window.AudioContext||window.webkitAudioContext;if(!C){alert("Il tuo browser non supporta l’audio.");return}
+AC=AC||new C();AC.resume();let t=AC.currentTime+.05;const sp=60/m[2];PL=[];
+for(const k of m[3].split(" ")){const x=/^(r|[a-g][#b]?\d)([qhdwtf]?)$/.exec(k);if(!x)continue;const du=DU[x[2]]*sp;
+if(x[1]!=="r"){const n=/^([a-g])([#b]?)(\d)$/.exec(x[1]),mi=NO[n[1]]+(n[2]==="#"?1:n[2]==="b"?-1:0)+12*(+n[3]+1);
+const o=AC.createOscillator(),g=AC.createGain();o.type="triangle";o.frequency.value=440*Math.pow(2,(mi-69)/12);
+g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(.3,t+.01);g.gain.exponentialRampToValueAtTime(.001,t+du*.95);
+o.connect(g);g.connect(AC.destination);o.start(t);o.stop(t+du);PL.push(o)}t+=du}}
+function ply(){if(!G||G.locked||G.plays<=0)return;G.plays--;document.getElementById("pc").textContent=G.plays;playMel(G.q.au);if(G.plays<=0)document.getElementById("pl").disabled=true}
+const MODES={cla:["Partita classica","🎯","Categorie e numero di domande a scelta"],tur:["Sfida a turni","👥","2 giocatori sullo stesso dispositivo"],sur:["Sopravvivenza","❤️","3 vite: ogni errore ne costa una"],day:["Sfida quotidiana","📅","10 domande uguali per tutti, oggi"],all:["Allenamento","📖","Senza timer, con calma"]};
+const BADGES=[["Prima partita",s=>s.games>=1],["Veterano (10 partite)",s=>s.games>=10],["Serie da 5",s=>s.maxStreak>=5],["Partita perfetta",s=>s.perfect>=1],["Livello 5",s=>lvl(s.xp)>=5]];
+let S;try{S=JSON.parse(localStorage.getItem("erudito")||"null")}catch(e){S=null}
+S=Object.assign({xp:0,games:0,tot:0,ok:0,cat:{},top:[],maxStreak:0,perfect:0,theme:"auto"},S||{});
+const save=()=>{try{localStorage.setItem("erudito",JSON.stringify(S))}catch(e){}};
+const lvl=x=>Math.floor(Math.sqrt(x/40))+1;
+const $app=document.getElementById("app"),esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+function theme(){const r=document.documentElement;S.theme==="auto"?r.removeAttribute("data-theme"):r.dataset.theme=S.theme}theme();
+function rng(a){return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function shuf(a,r=Math.random){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+const show=h=>{$app.innerHTML=h;const f=$app.querySelector("h1,h2");if(f){f.tabIndex=-1;f.focus({preventScroll:true})}};
+const nav=`<div class="row"><button class="b" onclick="home()">🏠 Home</button><button class="b" onclick="profile()">👤 Profilo</button></div>`;
+let cfg={cats:Object.keys(CATS),d:-1,n:10},G=null,tmr=null;
+
+function home(){clearInterval(tmr);stopMel();G=null;
+show(`<img src="icon-192.png" alt="" width="96" height="96" style="display:block;margin:4px 0"><h1>${NAME}</h1><p class="s">La sfida della conoscenza · Livello ${lvl(S.xp)} · ${S.xp} XP</p>`+
+Object.entries(MODES).map(([k,m])=>`<button class="b" onclick="setup('${k}')"><b>${m[1]} ${m[0]}</b><br><small>${m[2]}</small></button>`).join("")+
+`<button class="b" onclick="profile()">👤 Profilo, statistiche e classifica</button>`)}
+
+function setup(m){
+if(m==="day")return start(m);
+const chips=Object.entries(CATS).map(([k,c])=>`<button class="chip" style="--c:${c[2]}" aria-pressed="${cfg.cats.includes(k)}" onclick="tg('${k}','${m}')">${c[1]} ${c[0]}</button>`).join(" ");
+show(`<h2>${MODES[m][0]}</h2><p class="s">Scegli categorie e difficoltà.</p><div class="row">${chips}</div>
+<div class="card"><label>Difficoltà<br><select id="df" style="width:100%;padding:10px;border-radius:12px" onchange="cfg.d=+this.value"><option value="-1">Tutte</option>${DIF.map((d,i)=>`<option value="${i}"${cfg.d===i?" selected":""}>${d}</option>`).join("")}</select></label>
+${m==="sur"?"":`<br><label>Domande<br><select style="width:100%;padding:10px;border-radius:12px" onchange="cfg.n=+this.value">${[5,10,15,20].map(n=>`<option${cfg.n===n?" selected":""}>${n}</option>`).join("")}</select></label>`}</div>
+<button class="b p" onclick="start('${m}')">Inizia</button><button class="b" onclick="home()">← Indietro</button>`)}
+function tg(k,m){const i=cfg.cats.indexOf(k);i<0?cfg.cats.push(k):cfg.cats.length>1&&cfg.cats.splice(i,1);setup(m)}
+
+function start(m){
+const dk=new Date().toISOString().slice(0,10);
+let pool=Q.filter(q=>m==="day"?!q.au:(cfg.cats.includes(q.c)&&(cfg.d<0||q.d===cfg.d)&&(!q.au||S.audio!==false)));
+if(!pool.length){show(`<h2>Nessuna domanda</h2><p class="s">Nessuna domanda con questi filtri: cambia categoria o difficoltà.</p><button class="b" onclick="setup('${m}')">← Indietro</button>`);return}
+let qs=m==="day"?shuf(pool,rng(+dk.replace(/-/g,""))).slice(0,10):shuf(pool);
+const np=m==="tur"?2:1;
+if(m==="tur")qs=qs.slice(0,cfg.n*2);else if(m!=="sur")qs=qs.slice(0,cfg.n);
+G={m,qs,i:0,score:0,streak:0,maxS:0,ok:0,lives:3,cur:0,pl:m==="tur"?[0,0]:null,dk,np};next()}
+
+function next(){
+if(G.i>=G.qs.length||(G.m==="sur"&&G.lives<=0))return end();
+const q=G.qs[G.i];G.q=q;if(q.au)q.w=shuf(MEL.map(m=>m[0]).filter(t=>t!==q.a)).slice(0,3);G.opts=shuf([q.a,...q.w]);G.locked=false;G.plays=3;stopMel();
+const T=G.m==="all"?0:TM[q.d]+(q.au?15:0),c=CATS[q.c];G.T=T;G.dl=Date.now()+T*1000;
+const who=G.pl?`Tocca a: Giocatore ${G.cur+1} · `:"";
+show(`<div class="top"><span>${who}⭐ ${G.pl?G.pl.join(" – "):G.score}</span><span>${G.m==="sur"?"❤️".repeat(Math.max(G.lives,0)):(G.i+1)+"/"+G.qs.length}</span></div>
+${T?`<div class="bar" role="progressbar" aria-label="Tempo rimasto"><i id="tb" style="width:100%"></i></div><div id="tl" class="s" style="text-align:right">${T}s</div>`:"<div style='height:18px'></div>"}
+<span class="tag" style="--c:${c[2]}">${c[1]} ${c[0]} · ${DIF[q.d]}</span><h2 class="q">${esc(q.t)}</h2>${q.au?`<button class="b p" id="pl" onclick="ply()">▶ Ascolta la melodia (<span id="pc">3</span> ascolti)</button>`:""}
+<div role="group" aria-label="Risposte">${G.opts.map((o,i)=>`<button class="b" data-i="${i}" onclick="pick(${i})"><b>${"ABCD"[i]}.</b> ${esc(o)}</button>`).join("")}</div><div id="fb"></div>`);
+clearInterval(tmr);if(T)tmr=setInterval(tick,200)}
+function tick(){const left=Math.max(0,G.dl-Date.now()),tb=document.getElementById("tb");
+if(tb){tb.style.width=left/(G.T*10)+"%";document.getElementById("tl").textContent=Math.ceil(left/1000)+"s"}
+if(left<=0)pick(-1)}
+
+function pick(i){
+if(!G||G.locked)return;
+if(G.T&&i>=0&&Date.now()>G.dl+250)i=-1;
+G.locked=true;clearInterval(tmr);stopMel();
+const q=G.q,right=i>=0&&G.opts[i]===q.a,left=G.T?Math.max(0,G.dl-Date.now())/1000:0;
+let pts=0;
+if(right){G.streak++;G.maxS=Math.max(G.maxS,G.streak);G.ok++;
+pts=Math.round(100*[1,1.5,2][q.d])+(G.T?Math.round(40*left/G.T):0)+10*Math.min(G.streak-1,5)}
+else{G.streak=0;if(G.m==="sur")G.lives--}
+if(G.pl)G.pl[G.cur]+=pts;else G.score+=pts;
+const cs=S.cat[q.c]=S.cat[q.c]||{c:0,t:0};cs.t++;if(right)cs.c++;
+document.querySelectorAll("[data-i]").forEach(b=>{b.disabled=true;const o=G.opts[+b.dataset.i];
+if(o===q.a){b.classList.add("ok");b.insertAdjacentText("beforeend"," ✓")}else if(+b.dataset.i===i){b.classList.add("ko");b.insertAdjacentText("beforeend"," ✗")}});
+const msg=right?`✓ Corretto! +${pts} punti`:i<0?"⏱ Tempo scaduto":"✗ Risposta errata";
+document.getElementById("fb").innerHTML=`<div class="fb ${right?"ok":"ko"}" role="status"><b>${msg}</b><br>${i<0||!right?"Risposta: <b>"+esc(q.a)+"</b>. ":""}${esc(q.e)}</div><button class="b p" id="nx" onclick="adv()">Avanti →</button>`;
+document.getElementById("nx").focus()}
+function adv(){G.i++;if(G.pl)G.cur=1-G.cur;next()}
+
+function end(){clearInterval(tmr);
+const tot=G.i>G.qs.length?G.qs.length:Math.min(G.i,G.qs.length),sc=G.pl?Math.max(...G.pl):G.score,xp=Math.round(sc/5)+(G.m==="all"?0:5),oldL=lvl(S.xp);
+S.xp+=xp;S.games++;S.tot+=tot;S.ok+=G.ok;S.maxStreak=Math.max(S.maxStreak,G.maxS);
+if(tot>=5&&G.ok===tot)S.perfect++;
+if(G.m!=="all"&&sc>0){S.top.push({s:sc,m:MODES[G.m][0],d:new Date().toLocaleDateString("it-IT")});S.top.sort((a,b)=>b.s-a.s);S.top=S.top.slice(0,10)}
+save();
+const win=G.pl?(G.pl[0]===G.pl[1]?"Pareggio!":`Vince il Giocatore ${G.pl[0]>G.pl[1]?1:2}!`):"";
+const txt=`${NAME} ${G.dk}: ${G.ok}/${tot} corrette, ${sc} punti!`;
+show(`<h2>Partita finita</h2>${win?`<div class="card"><b>${win}</b> ${G.pl[0]} – ${G.pl[1]}</div>`:""}
+<div class="card"><p style="font-size:2rem;margin:0"><b>${sc}</b> punti</p><p class="s">${G.ok} risposte corrette su ${tot} · serie migliore ${G.maxS}</p>
+<p>+${xp} XP · Livello ${lvl(S.xp)}${lvl(S.xp)>oldL?" 🎉 nuovo livello!":""}</p></div>
+${G.m==="day"?`<button class="b" onclick="shr('${esc(txt)}')">📤 Condividi il punteggio</button>`:""}
+<button class="b p" onclick="setup('${G.m}')">Gioca ancora</button>${nav}`)}
+function shr(t){try{navigator.share?navigator.share({text:t}):navigator.clipboard.writeText(t).then(()=>alert("Copiato negli appunti"))}catch(e){alert(t)}}
+
+function profile(){clearInterval(tmr);
+const acc=S.tot?Math.round(100*S.ok/S.tot):0,cs=Object.entries(S.cat).filter(([,v])=>v.t>=1).map(([k,v])=>[k,Math.round(100*v.c/v.t),v.t]).sort((a,b)=>b[1]-a[1]);
+show(`<h2>Profilo</h2><div class="card"><b>Livello ${lvl(S.xp)}</b> · ${S.xp} XP<div class="bar"><i style="width:${Math.min(100,100*(S.xp-40*(lvl(S.xp)-1)**2)/(40*(2*lvl(S.xp)-1)))}%"></i></div>
+Partite: ${S.games} · Risposte corrette: ${acc}% (${S.ok}/${S.tot}) · Serie record: ${S.maxStreak}</div>
+<h3>Categorie</h3><div class="card">${cs.length?cs.map(c=>`${CATS[c[0]][1]} ${CATS[c[0]][0]}: <b>${c[1]}%</b> (${c[2]} dom.)`).join("<br>"):"Gioca per vedere le statistiche."}</div>
+<h3>Badge</h3><div class="card">${BADGES.map(b=>b[1](S)?"🏅 "+b[0]:"🔒 "+b[0]).join("<br>")}</div>
+<h3>Classifica locale</h3><div class="card">${S.top.length?S.top.map((t,i)=>`${i+1}. <b>${t.s}</b> · ${t.m} · ${t.d}`).join("<br>"):"Ancora nessun punteggio."}</div>
+<h3>Impostazioni</h3><button class="b" onclick="S.audio=S.audio===false;save();profile()">🔊 Domande audio: ${S.audio===false?"disattivate":"attivate"}</button><div class="row"><button class="b" onclick="S.theme={auto:'light',light:'dark',dark:'auto'}[S.theme];theme();save();profile()">Tema: ${{auto:"automatico",light:"chiaro",dark:"scuro"}[S.theme]}</button><button class="b" onclick="if(confirm('Cancellare tutti i progressi?')){try{localStorage.removeItem('erudito')}catch(e){}location.reload()}">Azzera dati</button></div>
+<button class="b p" onclick="home()">← Home</button>`)}
+document.addEventListener("keydown",e=>{if(G&&!G.locked&&"1234".includes(e.key)&&e.key)pick(+e.key-1)});
+home();
+</script></body></html>
